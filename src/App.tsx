@@ -1,9 +1,14 @@
-import "./App.css";
 
 import Home from "./components/Home";
 
+import RoomGenerationModale from "./components/RoomGenerationModale";
+
 function App() {
-  return <Home />;
+  return (
+		<>
+			<Home />
+		</>
+	);
 }
 
 export default App;
