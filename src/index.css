@@ -3,3 +3,23 @@
 body {
   background: #000;
 }
+
+::-webkit-scrollbar-track {
+  background-color: rgba(255, 255, 255, 0.129);
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  background-color: #00000034;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #8a4af3;
+  border-radius: 10px;
+}
+
+.ProseMirror {
+  min-height: 490px;
+  background: rgba(255, 255, 255, 0.030) !important;
+  border-radius: 0 0 10px 10px !important;
+}
