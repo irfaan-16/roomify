@@ -104,6 +104,7 @@ const Inbox = ({ chat }: { chat: any }) => {
 
   const sendMessage = () => {
     if (socket && input.trim()) {
+      console.log("sending message!");
       const newMessage: Message = {
         id: `${Date.now()}`,
         message: input,
@@ -111,7 +112,7 @@ const Inbox = ({ chat }: { chat: any }) => {
         isSender: true,
       };
 
-      // setMessages((prev) => [...prev, newMessage]); // Optimistic update
+      setMessages((prev) => [...prev, newMessage]); // Optimistic update
       socket.emit("send_message", newMessage); // Send to the server
       setInput(""); // Clear the input field
     }
@@ -191,7 +192,6 @@ const Inbox = ({ chat }: { chat: any }) => {
             )
           ) : (
             <div>
-              <h1 className="text-white">messages</h1>
               {messages.map((msg) => (
                 <Message
                   key={msg.id}

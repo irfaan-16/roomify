@@ -6,7 +6,7 @@ interface PageProps {
 
 const Message = ({ message, avatar, isSender }: PageProps) => {
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex items-start gap-2 mb-2">
       {!isSender && (
         <img src={avatar} alt="user avatar" className="h-7 rounded-full" />
       )}
