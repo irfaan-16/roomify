@@ -20,6 +20,50 @@ body {
 
 .ProseMirror {
   min-height: 490px;
-  background: rgba(255, 255, 255, 0.030) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
   border-radius: 0 0 10px 10px !important;
+}
+
+.code-block {
+  background: #000;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.fit-height {
+  max-height: calc(100vh - 250px);
+}
+.inline-code {
+  font-style: italic;
+  background: #ffffff0c;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+}
+
+.code-heading {
+  font-weight: bold;
+  font-size: 1.2rem;
+  display: inline-block;
+  /* margin-block: 1.5rem; */
+}
+
+ul {
+  list-style: circle;
+  padding-left: 1rem;
+}
+ul li {
+  margin-bottom: -1rem;
+}
+.code-lang {
+  display: block;
+  padding: 0.5rem 1rem;
+  background: #ffffff18;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+code {
+  /* padding-left: 5rem; */
+  /* margin-left: 1rem; */
 }

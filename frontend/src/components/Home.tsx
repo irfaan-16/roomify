@@ -1,8 +1,28 @@
 import Gradient from "/gradient.webp";
 import Navbar from "./Navbar";
 import { CirclePlus, LogIn } from "lucide-react";
+import { useSocket } from "./SocketContext";
+import { useEffect } from "react";
 
 function Home() {
+  const { socket } = useSocket();
+  // let currentRoomId: number;
+
+  const createRoom = () => {
+    if (!socket) return;
+
+    socket.emit("createRoom");
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+    // Listen for room creation and show the room ID
+    socket.on("roomCreated", (roomId) => {
+      // currentRoomId = roomId;
+      alert(`Room created! ID: ${roomId}`);
+    });
+  }, [socket]);
+
   return (
     <div className="py-4 relative ">
       <img
@@ -32,7 +52,10 @@ function Home() {
           </p>
 
           <div className="flex gap-4 m-auto w-fit">
-            <button className="text-white flex gap-2 bg-gradient-to-b from-white/2 to-white/5  shadow-xl shadow-white/2 py-2 px-4 rounded-md font-bold min-w-40 justify-center cursor-pointer">
+            <button
+              className="text-white flex gap-2 bg-gradient-to-b from-white/2 to-white/5  shadow-xl shadow-white/2 py-2 px-4 rounded-md font-bold min-w-40 justify-center cursor-pointer"
+              onClick={createRoom}
+            >
               <CirclePlus color="#d00bea" />
               create room
             </button>
