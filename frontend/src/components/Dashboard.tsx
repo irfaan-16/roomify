@@ -7,7 +7,8 @@ import TasksList from "./TasksList";
 import CallControls from "./CallControls";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import JsConfetti from "js-confetti";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import WhiteBoard from "./Whiteboard";
 
 const Dashboard = () => {
   console.log("dashboard rendered!");
@@ -30,8 +31,15 @@ const Dashboard = () => {
   );
   console.log(import.meta.env.VITE_GEMINI_KEY);
 
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction:
+      "You are a virtual study assistant which is integrated in a website called roomify",
+  });
   const chat = model.startChat({ history: [] });
+  const [markdown, setMarkDown] = useState<string>("");
+  const [currentTab, setCurrentTab] = useState<string>("whiteboard");
+
   const jsConfettiRef = useRef<JsConfetti | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
@@ -42,6 +50,13 @@ const Dashboard = () => {
       });
     }
   }, []);
+  const sumamrise = async () => {
+    const result = await chat.sendMessage(
+      `${markdown}, (this markdown is my notes, analyze it, summarise it and give me key points about it)`
+    );
+    console.log(result.response.text());
+  };
+
   return (
     <>
       <canvas
@@ -73,15 +88,36 @@ const Dashboard = () => {
             </button>
             ;
             <div className="bg-white/4  p-2 text-white font-bold flex justify-center gap-3">
-              <button className="py-2 px-4 rounded-md cursor-pointer min-w-36">
+              <button
+                className={`py-2 px-4  ${
+                  currentTab === "whiteboard" && "bg-black/60"
+                }  rounded-md cursor-pointer min-w-36`}
+                onClick={() => setCurrentTab("whiteboard")}
+              >
                 whiteboard
               </button>
               <div className="w-0.5 h-10 bg-white/10"></div>
-              <button className="py-2 px-4 bg-black/60 rounded-md cursor-pointer">
+              <button
+                className={`py-2 px-4 ${
+                  currentTab === "editor" && "bg-black/60"
+                } rounded-md cursor-pointer`}
+                onClick={() => setCurrentTab("editor")}
+              >
                 text editor
               </button>
+              <div className="w-0.5 h-10 bg-white/10"></div>
+              <button
+                className="py-2 px-4 rounded-md cursor-pointer"
+                onClick={sumamrise}
+              >
+                summarise
+              </button>
             </div>
-            <Editor />
+            {currentTab === "whiteboard" ? (
+              <WhiteBoard />
+            ) : (
+              <Editor setMarkDown={setMarkDown} />
+            )}
           </div>
           <Inbox chat={chat} />
         </div>

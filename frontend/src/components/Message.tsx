@@ -3,14 +3,19 @@ interface PageProps {
   avatar: string;
   isSender: boolean;
 }
+import { motion } from "motion/react";
 
 const Message = ({ message, avatar, isSender }: PageProps) => {
   return (
-    <div className="flex items-start gap-2 mb-2">
+    <motion.div
+      className="flex items-start gap-2 mb-2"
+      initial={{ y: 20, opacity: 0.1 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, type: "spring" }}
+    >
       {!isSender && (
         <img src={avatar} alt="user avatar" className="h-7 rounded-full" />
       )}
-
       <div
         className={`${
           !isSender
@@ -23,7 +28,7 @@ const Message = ({ message, avatar, isSender }: PageProps) => {
       {isSender && (
         <img src={avatar} alt="user avatar" className="h-7 rounded-full" />
       )}
-    </div>
+    </motion.div>
   );
 };
 

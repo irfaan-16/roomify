@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // import "@blocknote/core/fonts/inter.css";
 // import { BlockNoteView } from "@blocknote/mantine";
 // import "@blocknote/mantine/style.css";
@@ -58,7 +59,11 @@ import { WebrtcProvider } from "y-webrtc";
 const doc = new Y.Doc();
 const provider = new WebrtcProvider("my-document-id", doc); // setup a yjs provider (explained below)
 
-export default function Editor() {
+export default function Editor({ setMarkDown }: { setMarkDown: any }) {
+  const handleChange = async () => {
+    const markdown = await editor.blocksToMarkdownLossy();
+    setMarkDown(markdown);
+  };
   // Creates a new editor instance.
   const editor = useCreateBlockNote({
     // ...
@@ -80,5 +85,5 @@ export default function Editor() {
   });
 
   // Renders the editor instance using a React component.
-  return <BlockNoteView editor={editor} />;
+  return <BlockNoteView editor={editor} onChange={() => handleChange()} />;
 }

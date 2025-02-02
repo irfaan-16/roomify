@@ -23,6 +23,7 @@ const activeRooms = {};
 //   res.send("<h1>Hiii home page</h1>");
 // });
 // Use CORS for the Express app
+
 app.use(
   cors({
     origin: "http://localhost:5173", // Your React app's URL

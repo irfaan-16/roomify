@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Brain, X } from "lucide-react";
 import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css"; // Change theme if needed
@@ -33,7 +33,6 @@ export default function ChatBotModal({
 
       return `<pre class="code-block"><span class="code-lang">${firstWord}</span><code dangerouslySetInnerHTML={{ __html: ${highlightedCode} }}></code></pre>`;
     });
-
 
     const regex = /\*\*(.*?)\*\*/g;
     text = text.replace(
@@ -78,7 +77,10 @@ export default function ChatBotModal({
           </div>
           <div className=" p-4 overflow-y-auto whitespace-pre fit-height">
             {aiChatData.map((message: AIChatData) => (
-              <div
+              <motion.div
+                initial={{ y: 20, opacity: 0.1 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, type: "spring" }}
                 key={message.message}
                 className={`mb-4${
                   message.isPrompt ? "text-right" : "text-left flex gap-2"
@@ -101,7 +103,7 @@ export default function ChatBotModal({
                     }}
                   ></div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

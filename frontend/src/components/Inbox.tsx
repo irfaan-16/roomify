@@ -141,7 +141,7 @@ const Inbox = ({ chat }: { chat: any }) => {
       </div>
 
       <div className="flex flex-col justify-between h-full">
-        <div className="flex flex-col gap-2 mt-4 max-h-96 overflow-y-auto px-3">
+        <div className="flex flex-col gap-2 mt-4 overflow-y-auto px-3 h-full">
           {/* AI */}
 
           {currentTab === "AI" ? (
@@ -191,7 +191,7 @@ const Inbox = ({ chat }: { chat: any }) => {
               </div>
             )
           ) : (
-            <div>
+            <div className="h-full">
               {messages.map((msg) => (
                 <Message
                   key={msg.id}
