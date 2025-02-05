@@ -12,6 +12,7 @@ import WhiteBoard from "./Whiteboard";
 
 const Dashboard = () => {
   console.log("dashboard rendered!");
+  // const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(true);
   const handleClick = () => {
     if (jsConfettiRef.current) {
       jsConfettiRef.current.addConfetti({

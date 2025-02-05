@@ -30,6 +30,7 @@ app.use(
     methods: ["GET", "POST"],
   })
 );
+let sceneData = null; // Store the latest scene
 
 // Recreate __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -43,6 +44,12 @@ app.get("*", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
+  // Send existing scene to new users
+  socket.on("update-scene", ({ elements, id }) => {
+    console.log("server received data", elements);
+    // Broadcast the updated scene to all clients
+    socket.broadcast.emit("receive-scene", { elements, id });
+  });
 
   // Listen for "send_message" from clients
   socket.on("send_message", (message) => {
