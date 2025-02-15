@@ -4,6 +4,7 @@ import Message from "./Message";
 import { useSocket } from "./SocketContext";
 // import { Send } from "lucide-react";
 import ChatBotModal from "./ChatBotModal";
+import toast from "react-hot-toast";
 
 interface Message {
   id: string;
@@ -25,6 +26,20 @@ const Inbox = ({ chat }: { chat: any }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [currentTab, setCurrentTab] = useState<string>("AI");
   const [isChatbotOpen, setIsChatbotOpen] = useState<boolean>(false);
+
+  const notify = (msg: string) =>
+    toast.success(msg, {
+      position: "bottom-right",
+      icon: "🚀",
+      iconTheme: {
+        primary: "green",
+        secondary: "black",
+      },
+      style: {
+        backgroundColor: "green",
+        color: "#fff",
+      },
+    });
 
   const askAi = async () => {
     try {
@@ -80,6 +95,8 @@ const Inbox = ({ chat }: { chat: any }) => {
     socket.on("receive_message", (data) => {
       console.log("Message received on client:", data); // Ensure the data matches your `Message` interface
       setMessages((prev) => [...prev, data]);
+
+      notify(data.message);
     });
 
     return () => {

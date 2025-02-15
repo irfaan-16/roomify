@@ -7,11 +7,7 @@ import { useSyncDemo } from "@tldraw/sync";
 const WhiteBoard = () => {
   const store = useSyncDemo({ roomId: "my-unique-room-id" });
 
-  return (
-    <div className="h-full min-h-96">
-      <Tldraw store={store} inferDarkMode />
-    </div>
-  );
+  return <Tldraw store={store} inferDarkMode />;
 };
 
 export default WhiteBoard;

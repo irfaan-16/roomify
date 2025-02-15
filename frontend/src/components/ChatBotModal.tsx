@@ -63,7 +63,7 @@ export default function ChatBotModal({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.3 }}
-        className="inset-0 fixed left-0 bg-black bg-opacity-50 z-50 text-white px-14 py-16"
+        className="inset-0 fixed left-0 bg-black bg-opacity-50 z-[320] text-white px-14 py-16"
       >
         <div className="px-28 bg-white/2 rounded-lg h-full w-full">
           <div className="flex justify-between items-center p-4">

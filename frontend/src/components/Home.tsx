@@ -2,27 +2,41 @@ import Gradient from "/gradient.webp";
 import Navbar from "./Navbar";
 import { CirclePlus, LogIn } from "lucide-react";
 import { useSocket } from "./SocketContext";
-import { useEffect } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+import RoomGenerationModale from "./RoomGenerationModale";
 
 function Home() {
   const { socket } = useSocket();
+  const { session } = useAuth();
   // let currentRoomId: number;
-
+  const [roomId, setRoomId] = useState("");
+  const navigate = useNavigate();
+  const [showDialoag, setShowDialog] = useState<boolean>(false);
   const createRoom = () => {
     if (!socket) return;
-
-    socket.emit("createRoom");
+    // const newRoomId = uuidv4().slice(0, 8); // Shorten UUID for simplicity
+    setShowDialog(true);
+    const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setRoomId(newRoomId);
+    socket.emit("create-room", newRoomId);
+    // navigate(`/room/${newRoomId}`); // Navigate to ChatRoom with Room ID
   };
-
-  useEffect(() => {
+  // Join an existing room
+  const joinRoom = () => {
     if (!socket) return;
-    // Listen for room creation and show the room ID
-    socket.on("roomCreated", (roomId) => {
-      // currentRoomId = roomId;
-      alert(`Room created! ID: ${roomId}`);
+    if (!roomId.trim()) return;
+    socket.emit("join-room", {
+      roomId,
+      userInfo: {
+        picture: session.user.user_metadata.picture,
+        name: session.user.user_metadata.name,
+        email: session.user.user_metadata.email,
+      },
     });
-  }, [socket]);
-
+    navigate(`/room/${roomId}`); // Navigate to ChatRoom with Room ID
+  };
   return (
     <div className="py-4 relative ">
       <img
@@ -33,6 +47,13 @@ function Home() {
       <Navbar />
 
       <section className="mt-12 md:min-h-[calc(100vh-300px)] md:flex md:items-center md:justify-center">
+        {showDialoag && (
+          <RoomGenerationModale
+            action="create"
+            desc="use this Room ID to join the meeting"
+            link={`https://roomify-hrjc.onrender.com/room/${roomId}`}
+          />
+        )}
         {/* chip */}
         <div className="flex flex-col gap-6 ">
           <div className="rounded-3xl w-60 md:w-72 lg:w-96 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold tracking-wider py-[5px] text-center m-auto flex justify-between  px-3 items-center">
@@ -59,8 +80,17 @@ function Home() {
               <CirclePlus color="#d00bea" />
               create room
             </button>
+            <input
+              type="text"
+              placeholder="Enter Room ID"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+            />
 
-            <button className="text-white flex gap-2 bg-gradient-to-b from-white/2 to-white/5  shadow-xl shadow-white/2 py-2 px-4 rounded-md font-bold min-w-40 justify-center cursor-pointer">
+            <button
+              className="text-white flex gap-2 bg-gradient-to-b from-white/2 to-white/5  shadow-xl shadow-white/2 py-2 px-4 rounded-md font-bold min-w-40 justify-center cursor-pointer"
+              onClick={joinRoom}
+            >
               <LogIn color="#d00bea" />
               join room
             </button>
