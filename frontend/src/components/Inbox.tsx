@@ -5,12 +5,15 @@ import { useSocket } from "./SocketContext";
 // import { Send } from "lucide-react";
 import ChatBotModal from "./ChatBotModal";
 import toast from "react-hot-toast";
+import { useParams } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
 interface Message {
   id: string;
   message: string;
   timestamp: string;
   isSender: boolean;
+  senderImage: string;
 }
 
 interface AIChatData {
@@ -20,6 +23,8 @@ interface AIChatData {
 
 const Inbox = ({ chat }: { chat: any }) => {
   const { socket } = useSocket();
+  const { roomId } = useParams(); // Get Room ID from URL
+  const { session } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [aiChatData, setAIChatData] = useState<AIChatData[]>([]);
@@ -127,10 +132,11 @@ const Inbox = ({ chat }: { chat: any }) => {
         message: input,
         timestamp: new Date().toISOString(),
         isSender: true,
+        senderImage: session.user.user_metadata.picture,
       };
 
       setMessages((prev) => [...prev, newMessage]); // Optimistic update
-      socket.emit("send_message", newMessage); // Send to the server
+      socket.emit("send_message", { roomId, newMessage }); // Send to the server
       setInput(""); // Clear the input field
     }
   };
@@ -213,7 +219,7 @@ const Inbox = ({ chat }: { chat: any }) => {
                 <Message
                   key={msg.id}
                   message={msg.message}
-                  avatar="/avatar.jpg"
+                  avatar={msg.senderImage}
                   isSender={msg.isSender}
                 />
               ))}

@@ -2,7 +2,7 @@ import Gradient from "/gradient.webp";
 import Navbar from "./Navbar";
 import { CirclePlus, LogIn } from "lucide-react";
 import { useSocket } from "./SocketContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import RoomGenerationModale from "./RoomGenerationModale";
@@ -37,6 +37,13 @@ function Home() {
     });
     navigate(`/room/${roomId}`); // Navigate to ChatRoom with Room ID
   };
+
+  useEffect(() => {
+    if (roomId) {
+      navigate(`/room/${roomId}`);
+    }
+  }, []);
+
   return (
     <div className="py-4 relative ">
       <img
