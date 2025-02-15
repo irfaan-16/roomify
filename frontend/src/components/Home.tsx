@@ -13,16 +13,17 @@ function Home() {
   // let currentRoomId: number;
   const [roomId, setRoomId] = useState("");
   const navigate = useNavigate();
-  const [showDialoag, setShowDialog] = useState<boolean>(false);
+  const [showDialoag, setShowDialog] = useState<string | null>(null);
+
   const createRoom = () => {
     if (!socket) return;
     // const newRoomId = uuidv4().slice(0, 8); // Shorten UUID for simplicity
-    setShowDialog(true);
     const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setRoomId(newRoomId);
     socket.emit("create-room", newRoomId);
     // navigate(`/room/${newRoomId}`); // Navigate to ChatRoom with Room ID
   };
+
   // Join an existing room
   const joinRoom = () => {
     if (!socket) return;
@@ -38,11 +39,18 @@ function Home() {
     navigate(`/room/${roomId}`); // Navigate to ChatRoom with Room ID
   };
 
+  const handleClick = (action: string) => {
+    setShowDialog(action);
+    if (action === "create") {
+      createRoom();
+    }
+  };
+
   useEffect(() => {
     if (roomId) {
       navigate(`/room/${roomId}`);
     }
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="py-4 relative ">
@@ -56,9 +64,17 @@ function Home() {
       <section className="mt-12 md:min-h-[calc(100vh-300px)] md:flex md:items-center md:justify-center">
         {showDialoag && (
           <RoomGenerationModale
-            action="create"
+            action={showDialoag}
             desc="use this Room ID to join the meeting"
             link={`https://roomify-hrjc.onrender.com/room/${roomId}`}
+            actionHandler={
+              showDialoag === "create"
+                ? () =>
+                    navigator.clipboard.writeText(
+                      `https://roomify-hrjc.onrender.com/room/${roomId}`
+                    )
+                : joinRoom
+            }
           />
         )}
         {/* chip */}
@@ -82,12 +98,13 @@ function Home() {
           <div className="flex gap-4 m-auto w-fit">
             <button
               className="text-white flex gap-2 bg-gradient-to-b from-white/2 to-white/5  shadow-xl shadow-white/2 py-2 px-4 rounded-md font-bold min-w-40 justify-center cursor-pointer"
-              onClick={createRoom}
+              onClick={() => handleClick("create")}
             >
               <CirclePlus color="#d00bea" />
               create room
             </button>
             <input
+              className="text-white"
               type="text"
               placeholder="Enter Room ID"
               value={roomId}
@@ -96,7 +113,7 @@ function Home() {
 
             <button
               className="text-white flex gap-2 bg-gradient-to-b from-white/2 to-white/5  shadow-xl shadow-white/2 py-2 px-4 rounded-md font-bold min-w-40 justify-center cursor-pointer"
-              onClick={joinRoom}
+              onClick={() => handleClick("join")}
             >
               <LogIn color="#d00bea" />
               join room

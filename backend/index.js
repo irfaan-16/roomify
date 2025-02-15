@@ -97,7 +97,7 @@ io.on("connection", (socket) => {
   socket.on("create-room", (newRoomId) => {
     // const roomId = uuidv4();
     socket.join(newRoomId);
-    // activeRooms[newRoomId] = { host: socket.id, participants: [userInfo] };
+    activeRooms[newRoomId] = { host: socket.id, participants: [] };
     // console.log(activeRooms[newRoomId].participants);
     // console.log(`Room ${newRoomId} created by host ${userInfo.name}`);
 
@@ -107,17 +107,24 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join-room", ({ roomId, userInfo }) => {
-    io.to(roomId).emit("room-users", userInfo); // Notify room members
+    //no active room with the given room ID
+    if (!activeRooms[roomId]) {
+      socket.emit("error", "Room ID does not exist");
+      return;
+    }
 
+    activeRooms[roomId].participants.push(userInfo);
+    io.to(roomId).emit("room-users", activeRooms[roomId].participants); // Notify room members
     socket.join(roomId);
-    // activeRooms[roomId].participants.push(userInfo);
+
     console.log(`User ${socket.id} joined room ${roomId}`);
     socket.emit("room-joined", roomId);
   });
 
   socket.on("send_message", ({ roomId, newMessage }) => {
     console.log("Server received message:", roomId, newMessage); // Debugging
-    io.to(roomId).emit("receive_message", newMessage); // Broadcast the message to all clients
+    // io.to(roomId).emit("receive_message", newMessage); // Broadcast the message to all clients
+    socket.broadcast.to(roomId).emit("receive_message", newMessage);
   });
 
   socket.on("editor_changes_send", (documentJSON) => {

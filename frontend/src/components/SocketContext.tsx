@@ -16,10 +16,6 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
-// Define props for the provider
-// interface SocketProviderProps {
-//   children: ReactNode;
-// }
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [roomUsers, setRoomUsers] = useState<ConnectedUser[]>([]);
@@ -29,8 +25,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const newSocket = createSocketConnection();
     setSocket(newSocket);
-    newSocket.on("room-users", (user: ConnectedUser) =>
-      setRoomUsers((prev) => [...prev, user])
+    newSocket.on("room-users", (newUsers: ConnectedUser[]) =>
+      setRoomUsers(newUsers)
     );
 
     return () => {
