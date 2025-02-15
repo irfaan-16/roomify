@@ -1,5 +1,4 @@
 import { LogIn, Users, Clock, Link } from "lucide-react";
-// import Avatar from "/avatar.jpg";
 import supabase from "../../utils/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { useSocket } from "./SocketContext";

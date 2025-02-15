@@ -117,7 +117,7 @@ io.on("connection", (socket) => {
 
   socket.on("send_message", ({ roomId, newMessage }) => {
     console.log("Server received message:", roomId, newMessage); // Debugging
-    // io.to(roomId).emit("receive_message", { user: socket.id, message }); // Broadcast the message to all clients
+    io.to(roomId).emit("receive_message", newMessage); // Broadcast the message to all clients
   });
 
   socket.on("editor_changes_send", (documentJSON) => {
