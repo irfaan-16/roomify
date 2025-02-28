@@ -34,8 +34,7 @@ const io = new Server(server, {
 app.use(cors({ origin: "*" })); // Allow all origins
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-let sceneData = null; // Store the latest scene
+const activeRooms = {};
 
 // Recreate __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -85,7 +84,18 @@ app.post("/download-pdf", async (req, res) => {
     res.status(500).send({ msg: "Error generating your pdf", error });
   }
 });
-const activeRooms = {};
+
+app.get("/roomInfo/:roomId", (req, res) => {
+  // const roomId = req.params.roomId;
+  const { roomId } = req.params;
+  console.log("Room info id received:", roomId);
+
+  // Check if roomId exists in activeRooms
+  if (!activeRooms[roomId]) {
+    return res.status(404).json({ error: "Room not found" });
+  }
+  return res.json(activeRooms[roomId]);
+});
 
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
@@ -94,31 +104,50 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("receive-scene", { elements, id });
   });
 
-  socket.on("create-room", (newRoomId) => {
+  socket.on("create-room", ({ newRoomId, userInfo }) => {
     // const roomId = uuidv4();
     socket.join(newRoomId);
-    activeRooms[newRoomId] = { host: socket.id, participants: [] };
+
+    activeRooms[newRoomId] = {
+      host: { ...userInfo, socketId: socket.id },
+      participants: [],
+      active: false,
+      roomId: newRoomId,
+    };
     // console.log(activeRooms[newRoomId].participants);
     // console.log(`Room ${newRoomId} created by host ${userInfo.name}`);
 
     // io.to(newRoomId).emit("room-users", "new participant joineddddd"); // Notify room members
-
+    console.log("ACTIVE ROOMS:", activeRooms);
+    socket.emit("room-created", activeRooms[newRoomId]);
     console.log(socket.rooms);
   });
 
   socket.on("join-room", ({ roomId, userInfo }) => {
     //no active room with the given room ID
-    if (!activeRooms[roomId]) {
+    console.log("room id received", roomId);
+    const room = activeRooms[roomId];
+    console.log("ROOM:", room);
+
+    if (!room) {
+      console.log("Room ID does not exist!");
       socket.emit("error", "Room ID does not exist");
       return;
     }
 
-    activeRooms[roomId].participants.push(userInfo);
+    activeRooms[roomId].participants.push({ ...userInfo, socketID: socket.id });
     io.to(roomId).emit("room-users", activeRooms[roomId].participants); // Notify room members
     socket.join(roomId);
-
     console.log(`User ${socket.id} joined room ${roomId}`);
-    socket.emit("room-joined", roomId);
+    io.to(roomId).emit("room-joined", userInfo.name, activeRooms[roomId]);
+
+    console.log("ACTIVE ROOMS:", activeRooms);
+  });
+
+  socket.on("startMeeting", (roomId) => {
+    if (!roomId) return;
+    activeRooms[roomId].active = true;
+    io.to(roomId).emit("meetingStarted", roomId); // Notify all users in the room
   });
 
   socket.on("send_message", ({ roomId, newMessage }) => {
@@ -133,6 +162,24 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
+    // socket.leave(roomId);
+    // const result=
+    for (const roomID in activeRooms) {
+      let result = activeRooms[roomID].participants?.find(
+        (p) => p.socketID === socket.id
+      );
+      console.log(activeRooms[roomID], "jjjjjjjjjjjjjjjjjjj", result);
+
+      if (result) {
+        activeRooms[roomID].participants = activeRooms[
+          roomID
+        ].participants.filter((p) => p.socketID != socket.id);
+        console.log("FILTERED ROOM:", activeRooms);
+        io.to(roomID).emit("user-left", activeRooms[roomID], result);
+        // io.to(roomID).emit("room-users", activeRooms[roomID].participants); // Notify room members
+        return;
+      }
+    }
   });
 });
 

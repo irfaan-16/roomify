@@ -3,7 +3,6 @@ import Gradient from "/gradient.webp";
 import Inbox from "./Inbox";
 import Editor from "./Editor";
 import ConnectedUsersList from "./ConnectedUsersList";
-import TasksList from "./TasksList";
 import CallControls from "./CallControls";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import JsConfetti from "js-confetti";
@@ -20,12 +19,11 @@ import {
   PartyPopper,
   SquareX,
 } from "lucide-react";
-// import { useSocket } from "./SocketContext";
+import TodoList from "./TodoList";
+import { useRoom } from "./RoomContext";
+// import { useRoom } from "./RoomContext";
 //
 const Dashboard = () => {
-  // const { roomId } = useParams(); // Get Room ID from URL
-  // const { socket } = useSocket();
-  // const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(true);
   const handleClick = () => {
     if (jsConfettiRef.current) {
       jsConfettiRef.current.addConfetti({
@@ -53,7 +51,7 @@ const Dashboard = () => {
     try {
       console.log("Downloading pdf...");
 
-      const response = await fetch("http://localhost:4000/download-pdf", {
+      const response = await fetch("/download-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markdown }),
@@ -66,7 +64,8 @@ const Dashboard = () => {
       console.log("Error", error);
     }
   };
-
+  // const navigate = useNavigate();
+  const { roomId } = useRoom();
   const chat = model.startChat({ history: [] });
   const [markdown, setMarkDown] = useState<string>("");
   const [currentTab, setCurrentTab] = useState<string>("whiteboard");
@@ -74,18 +73,18 @@ const Dashboard = () => {
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const jsConfettiRef = useRef<JsConfetti | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   useEffect(() => {
-    // Initialize js-confetti with a single canvas
+    // if (!roomId) {
+    //   navigate("/");
+    // }
+
     if (canvasRef.current) {
       jsConfettiRef.current = new JsConfetti({
         canvas: canvasRef.current,
       });
     }
-  }, []);
-
-  // useEffect(() => {
-  //   socket.emit("join-room", roomId);
-  // }, [roomId]);
+  }, [roomId]);
 
   const sumamrise = async () => {
     const result = await chat.sendMessage(
@@ -219,12 +218,12 @@ const Dashboard = () => {
             <Inbox chat={chat} />
           </AnimatePresence>
         </div>
-        <div className="flex justify-between mt-10">
+        <div className="flex justify-between mt-4">
           <div className="w-full">
             <CallControls />
             <ConnectedUsersList />
           </div>
-          <TasksList />
+          <TodoList />
         </div>
       </section>
     </>
