@@ -95,3 +95,13 @@ ul li {
     @apply bg-background text-foreground;
   } */
 }
+
+.mesh {
+  background-color: transparent;
+  background-image: linear-gradient(#fff 1px, transparent 0),
+    linear-gradient(90deg, #fff 1px, transparent 0);
+  background-size: 3.5rem 3.5rem;
+  z-index: -100;
+  pointer-events: none;
+  opacity: 5%;
+}

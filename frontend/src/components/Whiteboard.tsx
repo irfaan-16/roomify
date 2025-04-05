@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Tldraw } from "@tldraw/tldraw";
+import { Tldraw } from "tldraw";
 import "tldraw/tldraw.css";
 import { useSyncDemo } from "@tldraw/sync";
 import { useParams } from "react-router-dom";

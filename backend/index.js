@@ -4,39 +4,75 @@ import http from "http";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { v4 as uuidv4 } from "uuid";
 import { mdToPdf } from "md-to-pdf";
+import multer from "multer";
+
 import fs from "fs";
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Your React app's URL
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
   },
 });
 
-// app.get("/data", (req, res) => {
-//   res.send("<h1>Hiii</h1>");
-// });
-
-// app.get("/", (req, res) => {
-//   res.send("<h1>Hiii home page</h1>");
-// });
-// Use CORS for the Express app
-
-// app.use(
-//   cors({
-//     origin: "http://localhost:5173", // Your React app's URL
-//     methods: ["GET", "POST"],
-//   })
-// );
-app.use(cors({ origin: "*" })); // Allow all origins
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 const activeRooms = {};
 
-// Recreate __dirname
+app.use(cors({ origin: "*" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    return cb(null, "./uploads");
+  },
+  filename: function (req, file, cb) {
+    return cb(null, `${file.originalname}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
+});
+
+app.post("/upload", upload.single("file"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  const { roomId } = req.body;
+  console.log("BEFORE UPLOAD:", JSON.stringify(activeRooms, null, 2)); // Log before
+
+  activeRooms[roomId].documents.push(req.file.originalname);
+  io.to(roomId).emit("new-file", req.file.originalname);
+  console.log("AFTER UPLOAD:", JSON.stringify(activeRooms, null, 2)); // Log after
+
+  return res.json({
+    message: "File uploaded successfully",
+    filePath: `/uploads/${req.file.originalname}`,
+  });
+});
+
+app.delete("/removeDocument", multer().none(), (req, res) => {
+  const { filename, roomId } = req.body;
+  console.log(req.body);
+
+  const filePath = `./uploads/${filename}`;
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.log("Error deleting file!", err);
+      return res.status(500).json({ error: "Failed to Delete the File" });
+    }
+    activeRooms[roomId].documents = activeRooms[roomId].documents.filter(
+      (doc) => doc != filename
+    );
+    console.log("Room after deleting document:", activeRooms[roomId]);
+
+    res.json({ message: "File Deleted successfully" });
+  });
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -46,6 +82,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
 });
 
+app.use("/uploads", express.static("uploads"));
 app.use("/pdfs", express.static("pdfs"));
 
 app.post("/download-pdf", async (req, res) => {
@@ -86,7 +123,6 @@ app.post("/download-pdf", async (req, res) => {
 });
 
 app.get("/roomInfo/:roomId", (req, res) => {
-  // const roomId = req.params.roomId;
   const { roomId } = req.params;
   console.log("Room info id received:", roomId);
 
@@ -113,6 +149,7 @@ io.on("connection", (socket) => {
       participants: [],
       active: false,
       roomId: newRoomId,
+      documents: [],
     };
     // console.log(activeRooms[newRoomId].participants);
     // console.log(`Room ${newRoomId} created by host ${userInfo.name}`);
@@ -125,19 +162,14 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", ({ roomId, userInfo }) => {
     //no active room with the given room ID
-    console.log("room id received", roomId);
-    const room = activeRooms[roomId];
-    console.log("ROOM:", room);
-
-    if (!room) {
+    if (!activeRooms[roomId]) {
       console.log("Room ID does not exist!");
       socket.emit("error", "Room ID does not exist");
       return;
     }
 
-    activeRooms[roomId].participants.push({ ...userInfo, socketID: socket.id });
-    io.to(roomId).emit("room-users", activeRooms[roomId].participants); // Notify room members
     socket.join(roomId);
+    activeRooms[roomId].participants.push({ ...userInfo, socketID: socket.id });
     console.log(`User ${socket.id} joined room ${roomId}`);
     io.to(roomId).emit("room-joined", userInfo.name, activeRooms[roomId]);
 
@@ -162,13 +194,10 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
-    // socket.leave(roomId);
-    // const result=
     for (const roomID in activeRooms) {
       let result = activeRooms[roomID].participants?.find(
         (p) => p.socketID === socket.id
       );
-      console.log(activeRooms[roomID], "jjjjjjjjjjjjjjjjjjj", result);
 
       if (result) {
         activeRooms[roomID].participants = activeRooms[
@@ -176,7 +205,6 @@ io.on("connection", (socket) => {
         ].participants.filter((p) => p.socketID != socket.id);
         console.log("FILTERED ROOM:", activeRooms);
         io.to(roomID).emit("user-left", activeRooms[roomID], result);
-        // io.to(roomID).emit("room-users", activeRooms[roomID].participants); // Notify room members
         return;
       }
     }

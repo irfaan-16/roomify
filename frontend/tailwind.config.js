@@ -16,6 +16,12 @@ module.exports = {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        mesh: "linear-gradient(#fff 1px, transparent 0), linear-gradient(90deg, #fff 1px, transparent 0)",
+      },
+      backgroundSize: {
+        mesh: "3.5rem 3.5rem",
+      },
       boxShadow: {
         modal: "0 0 20px 30px black",
       },

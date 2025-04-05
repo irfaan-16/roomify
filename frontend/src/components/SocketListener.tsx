@@ -23,6 +23,7 @@ interface RoomInfo {
   participants: ConnectedUser[];
   active: boolean;
   roomId: string;
+  documents: string[];
 }
 
 const SocketListener = () => {
@@ -42,6 +43,12 @@ const SocketListener = () => {
       console.log(name, "OUTPUT");
 
       toast.success(`${name} has joined the meeting🚀`);
+    });
+    socket.on("new-file", (url: string) => {
+      setRoomInfo(((prev: RoomInfo) => {
+       const updatedDocuments = new Set([...prev.documents, url]); // Ensure uniqueness
+       return { ...prev, documents: Array.from(updatedDocuments) };
+      }) as unknown as RoomInfo);
     });
 
     socket.on("meetingStarted", (roomId: string) => {

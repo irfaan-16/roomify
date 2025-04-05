@@ -9,6 +9,7 @@ import { useAuth } from "./AuthContext";
 import Features from "./Features";
 import toast from "react-hot-toast";
 import { useRoom } from "./RoomContext";
+import Footer from "./Footer";
 
 function Home() {
   const { socket } = useSocket();
@@ -16,16 +17,16 @@ function Home() {
   const { setRoomId } = useRoom();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
-  // const [showDialoag, setShowDialog] = useState<string | null>(null);
-
-  // const [generatedRoomId, setGeneratedRoomId] = useState<string>("");
 
   const createRoom = () => {
+    if (!session) {
+      toast.error("Please Login to Continue!😤");
+      return;
+    }
+
     if (!socket) return;
-    // const newRoomId = uuidv4().slice(0, 8); // Shorten UUID for simplicity
     const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setRoomId(newRoomId);
-    // setGeneratedRoomId(newRoomId);
     socket.emit("create-room", {
       newRoomId,
       userInfo: {
@@ -40,6 +41,10 @@ function Home() {
 
   // Join an existing room
   const joinRoom = async () => {
+    if (!session) {
+      toast.error("Please Login to Continue!😤");
+      return;
+    }
     if (!socket || !(inputRef?.current?.value as string).trim()) return;
     console.log("joiningggg the room!!");
 
@@ -53,7 +58,7 @@ function Home() {
     });
 
     const response = await fetch(
-      `/roomInfo/${inputRef.current?.value}`,
+      `http://localhost:4000/roomInfo/${inputRef.current?.value}`,
       {
         method: "GET",
         headers: {
@@ -63,7 +68,6 @@ function Home() {
     );
 
     const result = await response.json();
-    console.log("ROOM INFO:", result);
     if (result.active) {
       navigate(`/room/${result.roomId}`); // Navigate to ChatRoom with Room ID
     } else {
@@ -71,14 +75,8 @@ function Home() {
     }
   };
 
-  // useEffect(() => {
-  //   if (roomId) {
-  //     navigate(`/waiting/${roomId}`);
-  //   }
-  // }, [roomId]);
-
   return (
-    <div className="py-4 relative ">
+    <div className="relative py-4">
       <img
         src={Gradient}
         alt="gradient image"
@@ -148,6 +146,7 @@ function Home() {
         </div>
       </section>
       <Features />
+      <Footer />
     </div>
   );
 }

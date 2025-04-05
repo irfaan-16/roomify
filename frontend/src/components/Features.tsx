@@ -29,7 +29,7 @@ const features = [
 
 const Features = () => {
 	return (
-		<div className="px-20 flex flex-col gap-8 items-center py-10">
+		<div className="px-20 flex flex-col gap-8 items-center py-10 max-w-6xl m-auto">
 			{features.map((feature, idx) => {
 				return (
 					<FeatureCard

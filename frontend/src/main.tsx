@@ -15,7 +15,15 @@ createRoot(document.getElementById("root")!).render(
     <SocketProvider>
       <AuthProvider>
         <RoomProvider>
-          <Toaster />
+          <Toaster
+            toastOptions={{
+              style: {
+                backgroundColor: "black",
+                color: "white",
+                fontWeight: "bold",
+              },
+            }}
+          />
           <BrowserRouter>
             <App />
             <SocketListener /> {/* Always active */}

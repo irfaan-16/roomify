@@ -29,6 +29,7 @@ interface RoomInfo {
   participants: ConnectedUser[];
   active: boolean;
   roomId: string;
+  documents: string[];
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);

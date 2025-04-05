@@ -12,7 +12,7 @@ interface Message {
   id: string;
   message: string;
   timestamp: string;
-  isSender: boolean;
+  senderEmail: string;
   senderImage: string;
 }
 
@@ -32,10 +32,13 @@ const Inbox = ({ chat }: { chat: any }) => {
   const [currentTab, setCurrentTab] = useState<string>("AI");
   const [isChatbotOpen, setIsChatbotOpen] = useState<boolean>(false);
 
-  const notify = (msg: string) =>
+  const notify = (msg: string, senderImage: string) =>
     toast.success(msg, {
+      duration: 5000,
       position: "bottom-right",
-      icon: "🚀",
+      icon: (
+        <img src={senderImage} alt="avatar" className="rounded-full max-w-8" />
+      ),
       iconTheme: {
         primary: "green",
         secondary: "black",
@@ -101,7 +104,7 @@ const Inbox = ({ chat }: { chat: any }) => {
       console.log("Message received on client:", data); // Ensure the data matches your `Message` interface
       setMessages((prev) => [...prev, data]);
 
-      notify(data.message);
+      notify(data.message, data.senderImage);
     });
 
     return () => {
@@ -131,7 +134,7 @@ const Inbox = ({ chat }: { chat: any }) => {
         id: `${Date.now()}`,
         message: input,
         timestamp: new Date().toISOString(),
-        isSender: true,
+        senderEmail: session.user.user_metadata.email,
         senderImage: session.user.user_metadata.picture,
       };
 
@@ -220,7 +223,9 @@ const Inbox = ({ chat }: { chat: any }) => {
                   key={msg.id}
                   message={msg.message}
                   avatar={msg.senderImage}
-                  isSender={msg.isSender}
+                  isSender={
+                    msg.senderEmail === session.user.user_metadata.email
+                  }
                 />
               ))}
             </div>

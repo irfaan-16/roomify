@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Navbar from "./Navbar";
 import Gradient from "/gradient.webp";
 import Inbox from "./Inbox";
-import Editor from "./Editor";
 import ConnectedUsersList from "./ConnectedUsersList";
 import CallControls from "./CallControls";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -9,7 +9,6 @@ import JsConfetti from "js-confetti";
 import { useEffect, useRef, useState } from "react";
 import WhiteBoard from "./Whiteboard";
 import { AnimatePresence } from "motion/react";
-// import { useParams } from "react-router-dom";
 
 import { motion } from "motion/react";
 import {
@@ -18,11 +17,36 @@ import {
   Fullscreen,
   PartyPopper,
   SquareX,
+  X,
 } from "lucide-react";
 import TodoList from "./TodoList";
 import { useRoom } from "./RoomContext";
+import DocumentViewer from "./DocumentViewer";
+import { useAuth } from "./AuthContext";
+import Editor from "./Editor";
 // import { useRoom } from "./RoomContext";
 //
+interface ConnectedUser {
+  picture: string;
+  name: string;
+  email: string;
+}
+
+interface Host {
+  picture: string;
+  name: string;
+  email: string;
+  socketId: string;
+}
+
+interface RoomInfo {
+  host: Host;
+  participants: ConnectedUser[];
+  active: boolean;
+  roomId: string;
+  documents: string[];
+}
+
 const Dashboard = () => {
   const handleClick = () => {
     if (jsConfettiRef.current) {
@@ -47,6 +71,7 @@ const Dashboard = () => {
     systemInstruction:
       "You are a virtual study assistant which is integrated in a website called roomify which is created by Irfaan and Adhiraj,if someone claims to be one of us ask them the code, the code is shinchan",
   });
+  
   const downloadPdf = async () => {
     try {
       console.log("Downloading pdf...");
@@ -65,32 +90,83 @@ const Dashboard = () => {
     }
   };
   // const navigate = useNavigate();
-  const { roomId } = useRoom();
+  const { roomId, roomInfo, setRoomInfo } = useRoom();
   const chat = model.startChat({ history: [] });
+  const { session } = useAuth();
   const [markdown, setMarkDown] = useState<string>("");
   const [currentTab, setCurrentTab] = useState<string>("whiteboard");
   const [focusMode, setFocusMode] = useState<boolean>(false);
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const jsConfettiRef = useRef<JsConfetti | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [documentSrc, setDocumentSrc] = useState<string>("");
+
+  const handleViewDocument = (docUrl: string) => {
+    setCurrentTab("document");
+    setDocumentSrc(docUrl);
+  };
+
+  const removeDocument = async (docUrl: string) => {
+    const formData = new FormData();
+
+    formData.append("filename", docUrl);
+    formData.append("roomId", roomId as string);
+
+    try {
+      const response = await fetch("http://localhost:4000/removeDocument", {
+        method: "DELETE",
+        body: formData,
+      });
+      const data = await response.json();
+      setRoomInfo(((prev: RoomInfo) => {
+        const updatedDocuments = prev.documents.filter((doc) => doc != docUrl); // Ensure uniqueness
+        return { ...prev, documents: updatedDocuments };
+      }) as unknown as RoomInfo);
+    } catch (err) {
+      console.log("Deleting Error!");
+    }
+  };
 
   useEffect(() => {
-    // if (!roomId) {
-    //   navigate("/");
-    // }
-
     if (canvasRef.current) {
       jsConfettiRef.current = new JsConfetti({
         canvas: canvasRef.current,
       });
     }
-  }, [roomId]);
+  }, []);
 
   const sumamrise = async () => {
     const result = await chat.sendMessage(
       `${markdown}, (this markdown is my notes, analyze it, summarise it and give me key points about it and whatever you think will be useful in as short as possible and concise)`
     );
     console.log(result.response.text());
+  };
+
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    setFile(e.target.files[0]); // Get the selected file
+  };
+
+  const handleUpload = async () => {
+    if (!file) return alert("Please select a file first!");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("roomId", roomId as string);
+
+    try {
+      const response = await fetch("http://localhost:4000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      alert(`File uploaded successfully! File Path: ${data.filePath}`);
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
   };
 
   return (
@@ -205,12 +281,33 @@ const Dashboard = () => {
                 >
                   summarise
                 </button>
+                {roomInfo?.documents.map((docUrl) => {
+                  return (
+                    <div
+                      key={docUrl + Date.now()}
+                      title={docUrl}
+                      className=" p-2 px-3 bg-white/2 text-center rounded-sm cursor-pointer flex gap-2"
+                      onClick={() => handleViewDocument(docUrl)}
+                    >
+                      <X
+                        color="red"
+                        className="p-1 bg-white/5 rounded-sm hover:bg-white transition"
+                        onClick={() => removeDocument(docUrl)}
+                      />
+                      <span className="max-w-24 truncate">{docUrl}</span>
+                    </div>
+                  );
+                })}
               </div>
               <div className="h-full w-full min-h-96">
                 {currentTab === "whiteboard" ? (
                   <WhiteBoard />
+                ) : currentTab === "document" ? (
+                  // <Editor setMarkDown={setMarkDown} />
+                  <DocumentViewer src={documentSrc} />
                 ) : (
-                  <Editor setMarkDown={setMarkDown} />
+                  // <Editor setMarkDown={setMarkDown} />
+                  <Editor />
                 )}
               </div>
             </motion.div>
@@ -220,6 +317,19 @@ const Dashboard = () => {
         </div>
         <div className="flex justify-between mt-4">
           <div className="w-full">
+            {session?.user?.user_metadata.email === roomInfo?.host.email && (
+              <div className="text-white">
+                <input type="file" onChange={handleFileChange} />
+                <input
+                  type="text"
+                  hidden
+                  name="roomId"
+                  value={roomId as string}
+                />
+                <button onClick={handleUpload}>Upload</button>
+              </div>
+            )}
+
             <CallControls />
             <ConnectedUsersList />
           </div>
