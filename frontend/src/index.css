@@ -7,6 +7,7 @@
 
 body {
   background: #000;
+  overflow-x: hidden;
 }
 #root {
   min-height: 100vh;
@@ -26,7 +27,7 @@ body {
 }
 
 .ProseMirror {
-  min-height: 490px;
+  /* min-height: 490px; */
   background: rgba(255, 255, 255, 0.03) !important;
   border-radius: 0 0 10px 10px !important;
 }
@@ -38,7 +39,7 @@ body {
 }
 
 .fit-height {
-  max-height: calc(100vh - 250px);
+  max-height: calc(100vh - 140px);
 }
 .inline-code {
   font-style: italic;
@@ -50,12 +51,16 @@ body {
 .focus-height {
   height: 100vh;
 }
-
+.containerHeight {
+  height: calc(100vh - 310px);
+}
 .bn-container {
   height: 100%;
 }
 .bn-container > div:first-of-type {
   height: 100%;
+  overflow-y: auto;
+  min-height: 500px;
 }
 .tl-watermark_SEE-LICENSE {
   display: none !important;
@@ -83,9 +88,9 @@ ul li {
   font-weight: bold;
 }
 
-.tl-container {
+/* .tl-container {
   height: 500px !important;
-}
+} */
 
 @layer base {
   /* * {
@@ -105,3 +110,7 @@ ul li {
   pointer-events: none;
   opacity: 5%;
 }
+/* .tl-container {
+  height: 100% !important;
+  min-height: 500px;
+} */

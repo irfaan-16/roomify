@@ -76,15 +76,17 @@ const WaitingScreen = () => {
             Participants
           </h2>
 
-          <div className="flex mt-6 ">
-            <div className="rounded-full from-purple-700 to-pink-700 to-bottom bg-linear-to-b cursor-pointer flex items-center px-2 hover:from-purple-900 hover:to-pink-900 transition">
+          <div className="flex mt-6 justify-between items-center">
+            <div className="rounded-full from-purple-700 to-pink-700 to-bottom bg-linear-to-b cursor-pointer flex items-center px-2 hover:from-purple-900 hover:to-pink-900 transition min-h-20">
               <MoveLeftIcon color="white" size={18} />
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-4 justify-center">
               {roomInfo?.participants.length === 0 ? (
-                <h1 className="text-white w-full text-center">
-                  No one's around :(
-                </h1>
+                <div className="w-full">
+                  <h1 className="text-white w-full text-center text-3xl">
+                    No one's around :(
+                  </h1>
+                </div>
               ) : (
                 roomInfo?.participants.map((user) => {
                   return (
@@ -115,7 +117,7 @@ const WaitingScreen = () => {
                 })
               )}
             </div>
-            <div className="rounded-full from-purple-700 to-pink-700 to-bottom bg-linear-to-b cursor-pointer flex items-center px-2 hover:from-purple-900 hover:to-pink-900 transition">
+            <div className="rounded-full from-purple-700 to-pink-700 to-bottom bg-linear-to-b cursor-pointer flex items-center px-2 hover:from-purple-900 hover:to-pink-900 transition min-h-20">
               <MoveRightIcon color="white" size={18} />
             </div>
           </div>

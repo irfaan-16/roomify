@@ -46,8 +46,15 @@ const SocketListener = () => {
     });
     socket.on("new-file", (url: string) => {
       setRoomInfo(((prev: RoomInfo) => {
-       const updatedDocuments = new Set([...prev.documents, url]); // Ensure uniqueness
-       return { ...prev, documents: Array.from(updatedDocuments) };
+        const updatedDocuments = new Set([...prev.documents, url]); // Ensure uniqueness
+        return { ...prev, documents: Array.from(updatedDocuments) };
+      }) as unknown as RoomInfo);
+    });
+
+    socket.on("file-removed", (url: string) => {
+      setRoomInfo(((prev: RoomInfo) => {
+        const updatedDocuments = prev.documents.filter((elem) => elem != url); // Ensure uniqueness
+        return { ...prev, documents: Array.from(updatedDocuments) };
       }) as unknown as RoomInfo);
     });
 

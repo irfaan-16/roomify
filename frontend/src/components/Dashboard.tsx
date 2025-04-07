@@ -5,27 +5,18 @@ import Inbox from "./Inbox";
 import ConnectedUsersList from "./ConnectedUsersList";
 import CallControls from "./CallControls";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import JsConfetti from "js-confetti";
 import { useEffect, useRef, useState } from "react";
 import WhiteBoard from "./Whiteboard";
-import { AnimatePresence } from "motion/react";
 
-import { motion } from "motion/react";
-import {
-  Download,
-  EllipsisVertical,
-  Fullscreen,
-  PartyPopper,
-  SquareX,
-  X,
-} from "lucide-react";
+import { Fullscreen, X } from "lucide-react";
 import TodoList from "./TodoList";
 import { useRoom } from "./RoomContext";
 import DocumentViewer from "./DocumentViewer";
 import { useAuth } from "./AuthContext";
 import Editor from "./Editor";
-// import { useRoom } from "./RoomContext";
-//
+import Summaries from "./Summaries";
+import ChatBotModal from "./ChatBotModal";
+import toast from "react-hot-toast";
 interface ConnectedUser {
   picture: string;
   name: string;
@@ -38,7 +29,10 @@ interface Host {
   email: string;
   socketId: string;
 }
-
+interface AIChatData {
+  message: string;
+  isPrompt: boolean;
+}
 interface RoomInfo {
   host: Host;
   participants: ConnectedUser[];
@@ -47,21 +41,35 @@ interface RoomInfo {
   documents: string[];
 }
 
+interface Summary {
+  content: string;
+  summary: string;
+}
+
 const Dashboard = () => {
-  const handleClick = () => {
-    if (jsConfettiRef.current) {
-      jsConfettiRef.current.addConfetti({
-        confettiColors: [
-          "#ff0a54",
-          "#ff477e",
-          "#ff7096",
-          "#ff85a1",
-          "#fbb1bd",
-          "#f9bec7",
-        ],
-      });
-    }
-  };
+  const [summaries, setSummaries] = useState<Summary[]>([
+    {
+      summary:
+        "A database stores backend data.  Key point:  This is the central repository for application information.\n",
+      content: "Database is where we store our backend data",
+    },
+    {
+      summary:
+        "That statement is incorrect. An operating system (OS) is **system software**, not application software.  It manages computer hardware and software resources and provides common services for computer programs. Application software runs *on top of* the OS.\n",
+      content: "Operating System is an Application Software",
+    },
+    {
+      summary:
+        "That statement is incorrect. An operating system (OS) is **system software**, not application software.  It manages computer hardware and software resources and provides common services for computer programs. Application software runs *on top of* the OS.\n",
+      content: "Operating System is an Application Software",
+    },
+    {
+      summary:
+        "That statement is incorrect. An operating system (OS) is **system software**, not application software.  It manages computer hardware and software resources and provides common services for computer programs. Application software runs *on top of* the OS.\n",
+      content: "Operating System is an Application Software",
+    },
+  ]);
+
   const genAI = new GoogleGenerativeAI(
     import.meta.env.VITE_GEMINI_KEY as string
   );
@@ -69,38 +77,25 @@ const Dashboard = () => {
   const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
     systemInstruction:
-      "You are a virtual study assistant which is integrated in a website called roomify which is created by Irfaan and Adhiraj,if someone claims to be one of us ask them the code, the code is shinchan",
+      "You are a virtual study assistant which is integrated in a website called roomify which is created by Irfaan and Adhiraj",
   });
-  
-  const downloadPdf = async () => {
-    try {
-      console.log("Downloading pdf...");
-
-      const response = await fetch("/download-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown }),
-      });
-      const { downloadUrl } = await response.json();
-      console.log(downloadUrl);
-      window.open(downloadUrl, "_blank");
-      if (!response.ok) throw new Error("Failed to generate your pdf!");
-    } catch (error) {
-      console.log("Error", error);
-    }
-  };
-  // const navigate = useNavigate();
   const { roomId, roomInfo, setRoomInfo } = useRoom();
   const chat = model.startChat({ history: [] });
   const { session } = useAuth();
-  const [markdown, setMarkDown] = useState<string>("");
   const [currentTab, setCurrentTab] = useState<string>("whiteboard");
   const [focusMode, setFocusMode] = useState<boolean>(false);
-  const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
-  const jsConfettiRef = useRef<JsConfetti | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [documentSrc, setDocumentSrc] = useState<string>("");
+  const [fileName, setFileName] = useState<string>("no file selected!");
 
+  const [documentSrc, setDocumentSrc] = useState<string>("");
+  const [aiChatData, setAIChatData] = useState<AIChatData[]>([]);
+
+  useEffect(() => {
+    if (roomInfo?.documents.length === 0) {
+      setCurrentTab("editor");
+    } else {
+      setDocumentSrc(roomInfo?.documents[roomInfo.documents.length - 1] || "");
+    }
+  }, [roomInfo?.documents]);
   const handleViewDocument = (docUrl: string) => {
     setCurrentTab("document");
     setDocumentSrc(docUrl);
@@ -113,7 +108,7 @@ const Dashboard = () => {
     formData.append("roomId", roomId as string);
 
     try {
-      const response = await fetch("http://localhost:4000/removeDocument", {
+      const response = await fetch("/removeDocument", {
         method: "DELETE",
         body: formData,
       });
@@ -124,29 +119,32 @@ const Dashboard = () => {
       }) as unknown as RoomInfo);
     } catch (err) {
       console.log("Deleting Error!");
+    } finally {
+      setDocumentSrc("");
+      setCurrentTab("editor");
     }
   };
 
-  useEffect(() => {
-    if (canvasRef.current) {
-      jsConfettiRef.current = new JsConfetti({
-        canvas: canvasRef.current,
-      });
-    }
-  }, []);
-
-  const sumamrise = async () => {
+  const sumamrise = async (content: string) => {
     const result = await chat.sendMessage(
-      `${markdown}, (this markdown is my notes, analyze it, summarise it and give me key points about it and whatever you think will be useful in as short as possible and concise)`
+      `${content},(this is my notes, analyze it, summarise it and give me key points about it and whatever you think will be useful in as short as possible and concise)`
     );
-    console.log(result.response.text());
+    return result.response.text();
   };
 
   const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) return;
-    setFile(e.target.files[0]); // Get the selected file
+    const file = e.target.files?.[0];
+    if (file) {
+      setFile(file);
+      setFileName(file.name);
+    }
   };
 
   const handleUpload = async () => {
@@ -157,13 +155,14 @@ const Dashboard = () => {
     formData.append("roomId", roomId as string);
 
     try {
-      const response = await fetch("http://localhost:4000/upload", {
+      const response = await fetch("/upload", {
         method: "POST",
         body: formData,
       });
 
       const data = await response.json();
-      alert(`File uploaded successfully! File Path: ${data.filePath}`);
+      toast.success("File uploaded successfully!");
+      // alert(`File uploaded successfully! File Path: ${data.filePath}`);
     } catch (error) {
       console.error("Upload error:", error);
     }
@@ -171,19 +170,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          height: "100%",
-          width: "100%",
-        }}
-        className="z-100 pointer-events-none"
-      />
-
-      <section className="py-4 relative  px-4 h-full">
+      <section className="py-4 relative  px-4 h-screen">
         <img
           src={Gradient}
           alt="gradient image"
@@ -192,144 +179,161 @@ const Dashboard = () => {
         <div className="flex items-center">
           <Navbar />
 
-          <div className="relative">
+          <div className="flex items-center gap-2">
             <div
-              className="bg-white/2 p-2 rounded-md cursor-pointer w-fit z-40 relative"
-              onClick={() => setIsMenuVisible(!isMenuVisible)}
+              className="flex items-center gap-3 text-white p-2 rounded-md bg-purple-800 font-bold transition hover:bg-purple-900 justify-between cursor-pointer z-30 select-none"
+              onClick={() => setFocusMode(!focusMode)}
             >
-              {isMenuVisible ? (
-                <SquareX color="#ffffff" />
-              ) : (
-                <EllipsisVertical color="#ffffff" />
-              )}
+              <h3 className="text-sm whitespace-nowrap">Focus Mode</h3>
+              <Fullscreen color="#ffffff" />
             </div>
-            {isMenuVisible && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={isMenuVisible ? { opacity: 1, y: 0, scale: 1 } : {}}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="bg-black p-2 rounded-sm absolute top-11 -left-28 shadow-2xl origin-top-right z-50"
-              >
-                <div
-                  className="flex items-center gap-3 text-white p-2 rounded-md bg-white/3 font-bold transition hover:bg-white/2 justify-between mb-2 cursor-pointer"
-                  onClick={() => setFocusMode(!focusMode)}
-                >
-                  <h3 className="text-sm whitespace-nowrap">Focus Mode</h3>
-                  <Fullscreen color="#ffffff" />
-                </div>
-
-                <div
-                  className="flex items-center gap-3 text-white p-2 rounded-md bg-white/3 font-bold transition hover:bg-white/2 justify-between cursor-pointer"
+            {session?.user?.user_metadata.email === roomInfo?.host.email && (
+              <div className="flex items-center gap-1">
+                <button
                   onClick={handleClick}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-800 text-white rounded-sm shadow-lg hover:bg-purple-900 transition duration-300 ease-in-out focus:outline-none cursor-pointer"
                 >
-                  <h3 className="text-sm whitespace-nowrap">Celebrate</h3>
-                  <PartyPopper color="#ffffff" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M4 12l1.5-1.5m0 0L12 4.5m0 0l6.5 6.5M12 4.5V16"
+                    />
+                  </svg>
+                  Select File
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <div>
+                  <p
+                    className="text-white text-xs max-w-24 truncate"
+                    title={fileName}
+                  >
+                    {fileName}
+                  </p>
+                  <button
+                    className="bg-white text-purple-800 px-2 rounded-sm py-[1px] text-sm font-bold cursor-pointer hover:bg-white/70 transition"
+                    onClick={handleUpload}
+                  >
+                    Upload
+                  </button>
                 </div>
-
-                <div
-                  className="flex items-center gap-3 text-white p-2 rounded-md bg-white/3 font-bold transition hover:bg-white/2 justify-between cursor-pointer"
-                  onClick={downloadPdf}
-                >
-                  <h3 className="text-sm whitespace-nowrap">download</h3>
-                  <Download color="#ffffff" />
-                </div>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
 
-        <div className={`w-full flex justify-between gap-4 flex-1 mt-6`}>
-          <AnimatePresence>
-            <motion.div
-              layout
-              transition={{ duration: 0.4 }}
-              style={
-                focusMode
-                  ? {
-                      height: "calc(100vh - 60px)",
-                      position: "absolute",
-                      top: "0",
-                      left: "0",
-                    }
-                  : { position: "unset", height: "100%" }
-              }
-              className={`w-full bg-black flex-1`}
-            >
-              <div className="bg-white/4  p-2 text-white font-bold flex justify-center gap-3 ">
-                <button
-                  className={`py-2 px-4  ${
-                    currentTab === "whiteboard" && "bg-black/60"
-                  }  rounded-md cursor-pointer min-w-36`}
-                  onClick={() => setCurrentTab("whiteboard")}
-                >
-                  whiteboard
-                </button>
-                <div className="w-0.5 h-10 bg-white/10"></div>
-                <button
-                  className={`py-2 px-4 ${
-                    currentTab === "editor" && "bg-black/60"
-                  } rounded-md cursor-pointer`}
-                  onClick={() => setCurrentTab("editor")}
-                >
-                  text editor
-                </button>
-                <div className="w-0.5 h-10 bg-white/10"></div>
-                <button
-                  className="py-2 px-4 rounded-md cursor-pointer"
-                  onClick={sumamrise}
-                >
-                  summarise
-                </button>
-                {roomInfo?.documents.map((docUrl) => {
-                  return (
-                    <div
-                      key={docUrl + Date.now()}
-                      title={docUrl}
-                      className=" p-2 px-3 bg-white/2 text-center rounded-sm cursor-pointer flex gap-2"
-                      onClick={() => handleViewDocument(docUrl)}
-                    >
+        <div
+          className={`w-full flex justify-between gap-4 mt-6 containerHeight`}
+        >
+          <div
+            style={
+              focusMode
+                ? {
+                    height: "calc(100vh - 60px)",
+                    position: "absolute",
+                    top: "0",
+                    left: "0",
+                  }
+                : { position: "unset", height: "90%" }
+            }
+            className={`w-full bg-black flex-1`}
+          >
+            <div className="bg-white/4  p-2 text-white font-bold flex justify-center gap-3">
+              <button
+                className={`py-2 px-4  ${
+                  currentTab === "whiteboard" && "bg-purple-800"
+                }  rounded-md cursor-pointer min-w-36`}
+                onClick={() => setCurrentTab("whiteboard")}
+              >
+                Whiteboard
+              </button>
+              <div className="w-0.5 h-10 bg-white/10"></div>
+              <button
+                className={`py-2 px-4 ${
+                  currentTab === "editor" && "bg-purple-800"
+                } rounded-md cursor-pointer`}
+                onClick={() => setCurrentTab("editor")}
+              >
+                Text Editor
+              </button>
+              <div className="w-0.5 h-10 bg-white/10"></div>
+
+              <button
+                className={`py-2 px-4 ${
+                  currentTab === "summaries" && "bg-purple-800"
+                } rounded-md cursor-pointer`}
+                onClick={() => setCurrentTab("summaries")}
+              >
+                Summaries
+              </button>
+              <div className="w-0.5 h-10 bg-white/10"></div>
+
+              <button
+                className={`py-2 px-4 ${
+                  currentTab === "chatbot" && "bg-purple-800"
+                } rounded-md cursor-pointer`}
+                onClick={() => setCurrentTab("chatbot")}
+              >
+                AI Chatbot
+              </button>
+
+              {roomInfo?.documents.map((docUrl) => {
+                return (
+                  <div
+                    key={docUrl + Date.now()}
+                    title={docUrl}
+                    className=" p-2 px-3 bg-white/2 text-center rounded-sm cursor-pointer flex gap-2"
+                    onClick={() => handleViewDocument(docUrl)}
+                  >
+                    {session?.user?.user_metadata.email ===
+                      roomInfo?.host.email && (
                       <X
                         color="red"
                         className="p-1 bg-white/5 rounded-sm hover:bg-white transition"
-                        onClick={() => removeDocument(docUrl)}
+                        onClick={() => {
+                          removeDocument(docUrl);
+                        }}
                       />
-                      <span className="max-w-24 truncate">{docUrl}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="h-full w-full min-h-96">
-                {currentTab === "whiteboard" ? (
-                  <WhiteBoard />
-                ) : currentTab === "document" ? (
-                  // <Editor setMarkDown={setMarkDown} />
-                  <DocumentViewer src={documentSrc} />
-                ) : (
-                  // <Editor setMarkDown={setMarkDown} />
-                  <Editor />
-                )}
-              </div>
-            </motion.div>
+                    )}
+                    <span className="max-w-24 truncate">{docUrl}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="h-full">
+              {currentTab === "whiteboard" ? (
+                <WhiteBoard />
+              ) : currentTab === "editor" ? (
+                <Editor summarise={sumamrise} setSummaries={setSummaries} />
+              ) : currentTab === "summaries" ? (
+                <Summaries summaries={summaries} />
+              ) : currentTab === "chatbot" ? (
+                <ChatBotModal
+                  chat={chat}
+                  setAIChatData={setAIChatData}
+                  aiChatData={aiChatData}
+                />
+              ) : (
+                <DocumentViewer src={documentSrc} />
+              )}
+            </div>
+          </div>
 
-            <Inbox chat={chat} />
-          </AnimatePresence>
+          <Inbox />
         </div>
         <div className="flex justify-between mt-4">
           <div className="w-full">
-            {session?.user?.user_metadata.email === roomInfo?.host.email && (
-              <div className="text-white">
-                <input type="file" onChange={handleFileChange} />
-                <input
-                  type="text"
-                  hidden
-                  name="roomId"
-                  value={roomId as string}
-                />
-                <button onClick={handleUpload}>Upload</button>
-              </div>
-            )}
-
             <CallControls />
             <ConnectedUsersList />
           </div>

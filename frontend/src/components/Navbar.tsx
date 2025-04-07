@@ -4,7 +4,6 @@ import { useAuth } from "./AuthContext";
 
 const Navbar = () => {
   const { session } = useAuth();
-  // const { roomId } = useRoom();
   const roomId = "";
   const handleSignIn = async () => {
     const data = await supabase.auth.signInWithOAuth({

@@ -68,7 +68,7 @@ app.delete("/removeDocument", multer().none(), (req, res) => {
       (doc) => doc != filename
     );
     console.log("Room after deleting document:", activeRooms[roomId]);
-
+    io.to(roomId).emit("file-removed", filename);
     res.json({ message: "File Deleted successfully" });
   });
 });
@@ -83,44 +83,44 @@ app.get("/", (req, res) => {
 });
 
 app.use("/uploads", express.static("uploads"));
-app.use("/pdfs", express.static("pdfs"));
+// app.use("/pdfs", express.static("pdfs"));
 
-app.post("/download-pdf", async (req, res) => {
-  console.log("server pdf");
+// app.post("/download-pdf", async (req, res) => {
+//   console.log("server pdf");
 
-  try {
-    const { markdown } = req.body;
-    console.log(markdown, "MARKDOWN");
-    if (!markdown) return res.status(400).send("Markdown content is required!");
+//   try {
+//     const { markdown } = req.body;
+//     console.log(markdown, "MARKDOWN");
+//     if (!markdown) return res.status(400).send("Markdown content is required!");
 
-    // Convert Markdown to PDF
-    const pdfResult = await mdToPdf({ content: markdown });
+//     // Convert Markdown to PDF
+//     const pdfResult = await mdToPdf({ content: markdown });
 
-    if (!pdfResult || !pdfResult.content) {
-      throw new Error("PDF conversion failed!");
-    }
-    // Ensure "pdfs" directory exists
-    const pdfDir = path.join(process.cwd(), "pdfs");
-    if (!fs.existsSync(pdfDir)) {
-      console.log("creating file..");
-      fs.mkdirSync(pdfDir, { recursive: true });
-    }
+//     if (!pdfResult || !pdfResult.content) {
+//       throw new Error("PDF conversion failed!");
+//     }
+//     // Ensure "pdfs" directory exists
+//     const pdfDir = path.join(process.cwd(), "pdfs");
+//     if (!fs.existsSync(pdfDir)) {
+//       console.log("creating file..");
+//       fs.mkdirSync(pdfDir, { recursive: true });
+//     }
 
-    // Generate unique filename and save PDF
-    const pdfFilename = `document-${Date.now()}.pdf`;
-    console.log(pdfFilename, "FILENAME");
+//     // Generate unique filename and save PDF
+//     const pdfFilename = `document-${Date.now()}.pdf`;
+//     console.log(pdfFilename, "FILENAME");
 
-    const outputPath = path.join(pdfDir, pdfFilename);
-    fs.writeFileSync(outputPath, pdfResult.content);
-    const sendData = {
-      downloadUrl: `http://localhost:${4000}/pdfs/${pdfFilename}`,
-    };
-    // Return download URL
-    return res.json(sendData);
-  } catch (error) {
-    res.status(500).send({ msg: "Error generating your pdf", error });
-  }
-});
+//     const outputPath = path.join(pdfDir, pdfFilename);
+//     fs.writeFileSync(outputPath, pdfResult.content);
+//     const sendData = {
+//       downloadUrl: `http://localhost:${4000}/pdfs/${pdfFilename}`,
+//     };
+//     // Return download URL
+//     return res.json(sendData);
+//   } catch (error) {
+//     res.status(500).send({ msg: "Error generating your pdf", error });
+//   }
+// });
 
 app.get("/roomInfo/:roomId", (req, res) => {
   const { roomId } = req.params;

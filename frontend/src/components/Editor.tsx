@@ -1,21 +1,91 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Block, BlockNoteEditor } from "@blocknote/core";
+import { BlockNoteEditor } from "@blocknote/core";
 import "@blocknote/core/fonts/inter.css";
 import { useCreateBlockNote } from "@blocknote/react";
+
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
+import { useState } from "react";
+interface Summary {
+  content: string;
+  summary: string;
+}
+import jsPDF from "jspdf";
+import { HardDriveDownloadIcon, Shapes } from "lucide-react";
 
-function Editor() {
+type EditorProps = {
+  summarise: (content: string) => Promise<string>;
+  setSummaries: React.Dispatch<React.SetStateAction<Summary[]>>;
+};
+
+function Editor({ summarise, setSummaries }: EditorProps) {
   const editor: BlockNoteEditor = useCreateBlockNote();
+  const [selectedText, setSelectedText] = useState("");
+  const [html, setHtml] = useState<string>("");
+  const handleSummarise = async () => {
+    const content = await summarise(selectedText);
+    setSummaries(
+      (prev) =>
+        [...prev, { summary: content, content: selectedText }] as Summary[]
+    );
+  };
+  const handleMouseUp = () => {
+    const selection = window.getSelection()!.toString();
+    setSelectedText(selection);
+    console.log(selectedText);
+  };
 
+  const handleOnChange = async () => {
+    // Converts the editor's contents from Block objects to Markdown and store to state.
+    const markdown = await editor.blocksToFullHTML(editor.document);
+    setHtml(markdown);
+  };
+
+  const downloadPdf = () => {
+    const element = document.getElementById("pdf-content");
+    if (!element) return;
+
+    const doc = new jsPDF("p", "pt", "a4");
+
+    doc.html(element, {
+      callback: function (doc) {
+        doc.save("document.pdf");
+      },
+      margin: [40, 40, 40, 40],
+      autoPaging: "text",
+      x: 10,
+      y: 10,
+      width: 500,
+      windowWidth: 800,
+    });
+  };
   return (
-    <BlockNoteView
-      editor={editor}
-      onChange={() => {
-        console.log(JSON.stringify(editor.document));
-      }}
-    />
+    <div className="relative h-full" onMouseUp={handleMouseUp}>
+      <div
+        id="pdf-content"
+        dangerouslySetInnerHTML={{ __html: html }}
+        className="absolute left-[-999999]"
+      />
+
+      <BlockNoteView editor={editor} onChange={handleOnChange} />
+      <div className="absolute bottom-4 right-4 flex gap-4">
+        <button
+          className="p-2 rounded-md bg-purple-800  text-white text-sm cursor-pointer transition hover:bg-purple-500  flex items-center gap-2"
+          onClick={handleSummarise}
+        >
+          <Shapes size={18} />
+          Summarise
+        </button>
+        <button
+          className="p-2 rounded-md bg-purple-800 text-white text-sm cursor-pointer transition hover:bg-purple-500 flex items-center gap-2"
+          onClick={downloadPdf}
+        >
+          <HardDriveDownloadIcon size={18} />
+          Download
+        </button>
+      </div>
+    </div>
   );
 }
 

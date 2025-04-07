@@ -42,7 +42,7 @@ const TodoList = () => {
   };
 
   return (
-    <div className="bg-white/2 p-4 rounded-xl min-w-96  max-w-full mx-auto  backdrop-blur-lg shadow-lg border border-gray-800 min-h-48 -z-10">
+    <div className="bg-white/2 p-4 rounded-xl min-w-96  max-w-full mx-auto  backdrop-blur-lg shadow-lg border border-gray-800 min-h-48 z-10">
       <h2 className="text-2xl font-semibold text-white mb-2">Tasks</h2>
       <form onSubmit={addTodo} className="flex gap-2 mb-4">
         <input
@@ -54,7 +54,7 @@ const TodoList = () => {
         />
         <button
           type="submit"
-          className="p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors cursor-pointer"
+          className="p-2 rounded-lg bg-purple-800 text-white hover:bg-purple-700 transition-colors cursor-pointer"
         >
           <Plus size={20} />
         </button>

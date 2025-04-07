@@ -58,7 +58,7 @@ function Home() {
     });
 
     const response = await fetch(
-      `http://localhost:4000/roomInfo/${inputRef.current?.value}`,
+      `/roomInfo/${inputRef.current?.value}`,
       {
         method: "GET",
         headers: {
@@ -76,7 +76,7 @@ function Home() {
   };
 
   return (
-    <div className="relative py-4">
+    <div className="relative pt-4">
       <img
         src={Gradient}
         alt="gradient image"

@@ -1,25 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { motion, AnimatePresence } from "motion/react";
-import { Brain, X } from "lucide-react";
+import { motion } from "motion/react";
+import { Brain } from "lucide-react";
 import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css"; // Change theme if needed
+import { useRef } from "react";
 
 interface AIChatData {
   message: string;
   isPrompt: boolean;
 }
 interface ChatbotComponentProps {
-  onClose: (arg0: boolean) => void;
+  // onClose: (arg0: boolean) => void;
+  chat: any;
   aiChatData: AIChatData[];
-  children: React.ReactNode;
+  setAIChatData: React.Dispatch<React.SetStateAction<AIChatData[]>>;
 }
 
 export default function ChatBotModal({
-  onClose,
+  chat,
   aiChatData,
-  children,
+  setAIChatData,
 }: ChatbotComponentProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  // const [aiChatData, setAIChatData] = useState<AIChatData[]>([]);
+  console.log(chat, "CHAT");
+
   function formatMessage(text: string) {
     // 1. Handle multi-line code blocks (```)
     text = text.replace(/```([\s\S]+?)```/g, (_match, code) => {
@@ -31,7 +37,7 @@ export default function ChatBotModal({
       const restOfCode = firstWordMatch[2].trim(); // Trim leading/trailing spaces in the rest
       const highlightedCode = hljs.highlightAuto(restOfCode).value;
 
-      return `<pre class="code-block"><span class="code-lang">${firstWord}</span><code dangerouslySetInnerHTML={{ __html: ${highlightedCode} }}></code></pre>`;
+      return `<pre class="code-block"><span class="code-lang">${firstWord}</span><code>${highlightedCode}</code></pre>`;
     });
 
     const regex = /\*\*(.*?)\*\*/g;
@@ -56,61 +62,114 @@ export default function ChatBotModal({
     return text;
   }
 
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.3 }}
-        className="inset-0 fixed left-0 bg-black bg-opacity-50 z-[320] text-white px-14 py-16"
-      >
-        <div className="px-28 bg-white/2 rounded-lg h-full w-full">
-          <div className="flex justify-between items-center p-4">
-            <h2 className="text-lg font-semibold">Chatbot</h2>
-            <button
-              onClick={() => onClose(false)}
-              className="cursor-pointer bg-red-700 p-2 rounded-md hover:bg-red-900 transition"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-          <div className=" p-4 overflow-y-auto whitespace-pre fit-height">
-            {aiChatData.map((message: AIChatData) => (
-              <motion.div
-                initial={{ y: 20, opacity: 0.1 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, type: "spring" }}
-                key={message.message}
-                className={`mb-4${
-                  message.isPrompt ? "text-right" : "text-left flex gap-2"
-                }`}
-              >
-                {!message.isPrompt && (
-                  <div className="p-2 rounded-md bg-white/4 h-fit mr-2">
-                    <Brain />
-                  </div>
-                )}
-                {message.isPrompt ? (
-                  <div className="rounded-full text-wrap bg-gradient-to-l to-purple-700 ml-auto max-w-fit py-2 px-4 mb-4">
-                    <p>{message.message}</p>
-                  </div>
-                ) : (
-                  <div
-                    className="text-wrap leading-[1.3] mb-4"
-                    dangerouslySetInnerHTML={{
-                      __html: formatMessage(message.message),
-                    }}
-                  ></div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-        {children}
-      </motion.div>
+  const askAi = async () => {
+    try {
+      console.log(chat);
 
-      {/* {children} */}
-    </AnimatePresence>
+      chat._history.push({
+        role: "user",
+        parts: [{ text: inputRef.current?.value }],
+      });
+
+      const result = await chat.sendMessageStream(inputRef.current?.value);
+      let aiResponse: string = "";
+
+      setAIChatData((prev) => [
+        ...prev,
+        { message: inputRef.current?.value, isPrompt: true } as AIChatData,
+      ]);
+
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        aiResponse += chunkText;
+
+        setAIChatData((prev) => {
+          // Make a fresh copy of prev state
+          const updatedChat = [...prev];
+
+          if (
+            updatedChat.length === 0 ||
+            updatedChat[updatedChat.length - 1].isPrompt
+          ) {
+            // If last message is from the user, create a new AI message
+            return [...updatedChat, { message: chunkText, isPrompt: false }];
+          } else {
+            // Append to the existing AI message correctly
+            return updatedChat.map((chat, index) =>
+              index === updatedChat.length - 1
+                ? { ...chat, message: chat.message + chunkText }
+                : chat
+            );
+          }
+        });
+      }
+      chat._history.push({ role: "model", parts: [{ text: aiResponse }] });
+
+      console.log(chat);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      inputRef.current!.value = "";
+    }
+  };
+
+  return (
+    <div className="h-full min-h-96 flex flex-col justify-between">
+      <div className="bg-white/2 rounded-lg h-full w-full text-white flex-1">
+        <div className=" p-4 overflow-y-auto whitespace-pre fit-height w-[90%] m-auto max-w-[1200px]">
+          {aiChatData.map((message: AIChatData) => (
+            <motion.div
+              initial={{ y: 20, opacity: 0.1 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, type: "spring" }}
+              key={message.message}
+              className={`mb-4${
+                message.isPrompt ? "text-right" : "text-left flex gap-2"
+              }`}
+            >
+              {!message.isPrompt && (
+                <div className="p-2 rounded-md bg-white/4 h-fit mr-2">
+                  <Brain />
+                </div>
+              )}
+              {message.isPrompt ? (
+                <div className="rounded-full text-wrap bg-gradient-to-l to-purple-700 ml-auto max-w-fit py-2 px-4 mb-4">
+                  <p>{message.message}</p>
+                </div>
+              ) : (
+                <div
+                  className="text-wrap leading-[1.3] mb-4"
+                  dangerouslySetInnerHTML={{
+                    __html: formatMessage(message.message),
+                  }}
+                ></div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+      <div className="pt-2 flex items-center  p-2 rounded-md mt-3 gap-2 w-full  bg-white/3 px-4">
+        <input
+          type="text"
+          placeholder="write your message..."
+          className="bg-white/5 border-none outline-none text-white rounded-full px-3 py-2 text-md w-full"
+          // onChange={(e) => setInput(e.target.value)}
+          ref={inputRef}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              askAi();
+            }
+          }}
+        />
+        <div
+          className="py-1 px-2 rounded-sm  cursor-pointer bg-white/2"
+          onClick={askAi}
+        >
+          {/* <Send size={20} color="#fff" /> */}
+          <p className="font-bold text-purple-600">ask</p>
+        </div>
+      </div>
+    </div>
   );
 }
