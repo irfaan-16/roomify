@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+
 import Navbar from "./Navbar";
 import Gradient from "/gradient.webp";
 import Inbox from "./Inbox";
@@ -112,13 +113,13 @@ const Dashboard = () => {
         method: "DELETE",
         body: formData,
       });
-      const data = await response.json();
+      await response.json();
       setRoomInfo(((prev: RoomInfo) => {
         const updatedDocuments = prev.documents.filter((doc) => doc != docUrl); // Ensure uniqueness
         return { ...prev, documents: updatedDocuments };
       }) as unknown as RoomInfo);
     } catch (err) {
-      console.log("Deleting Error!");
+      toast.error("Deleting Error!");
     } finally {
       setDocumentSrc("");
       setCurrentTab("editor");
@@ -160,11 +161,10 @@ const Dashboard = () => {
         body: formData,
       });
 
-      const data = await response.json();
+      await response.json();
       toast.success("File uploaded successfully!");
-      // alert(`File uploaded successfully! File Path: ${data.filePath}`);
     } catch (error) {
-      console.error("Upload error:", error);
+      toast.error(`Upload error: ${error}`);
     }
   };
 
