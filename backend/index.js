@@ -85,7 +85,7 @@ app.get("/", (req, res) => {
 
 app.use("/uploads", express.static("uploads"));
 
-app.get("/data", async (req, res) => {
+app.get("/getData", async (req, res) => {
   const { userEmail, roomId } = req.query;
   const { data, error } = await supabase
     .from("room_data")

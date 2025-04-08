@@ -112,7 +112,7 @@ const DataPreview = () => {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `/data?roomId=${roomId}&userEmail=${userEmail}`
+          `/getData?roomId=${roomId}&userEmail=${userEmail}`
         );
         //   console.log(res);
         const { data } = await res.json();
