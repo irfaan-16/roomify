@@ -9,7 +9,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useEffect, useRef, useState } from "react";
 import WhiteBoard from "./Whiteboard";
 
-import { Fullscreen, X } from "lucide-react";
+import { Fullscreen, Save, X } from "lucide-react";
 import TodoList from "./TodoList";
 import { useRoom } from "./RoomContext";
 import DocumentViewer from "./DocumentViewer";
@@ -18,6 +18,10 @@ import Editor from "./Editor";
 import Summaries from "./Summaries";
 import ChatBotModal from "./ChatBotModal";
 import toast from "react-hot-toast";
+// import supabase from "utils/supabaseClient";
+// import supabase from "/utils/supabaseClient";
+import supabase from "../../utils/supabaseClient";
+// import { useNavigate } from "react-router-dom";
 interface ConnectedUser {
   picture: string;
   name: string;
@@ -70,6 +74,7 @@ const Dashboard = () => {
       content: "Operating System is an Application Software",
     },
   ]);
+  // const navigate = useNavigate();
 
   const genAI = new GoogleGenerativeAI(
     import.meta.env.VITE_GEMINI_KEY as string
@@ -81,11 +86,19 @@ const Dashboard = () => {
       "You are a virtual study assistant which is integrated in a website called roomify which is created by Irfaan and Adhiraj",
   });
   const { roomId, roomInfo, setRoomInfo } = useRoom();
-  const chat = model.startChat({ history: [] });
+  const chatRef = useRef<ReturnType<typeof model.startChat> | null>(null);
+  const editorContentRef = useRef<string>("");
+
   const { session } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>("whiteboard");
   const [focusMode, setFocusMode] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("no file selected!");
+
+  useEffect(() => {
+    if (!chatRef.current) {
+      chatRef.current = model.startChat({ history: [] });
+    }
+  }, [model]);
 
   const [documentSrc, setDocumentSrc] = useState<string>("");
   const [aiChatData, setAIChatData] = useState<AIChatData[]>([]);
@@ -97,6 +110,7 @@ const Dashboard = () => {
       setDocumentSrc(roomInfo?.documents[roomInfo.documents.length - 1] || "");
     }
   }, [roomInfo?.documents]);
+
   const handleViewDocument = (docUrl: string) => {
     setCurrentTab("document");
     setDocumentSrc(docUrl);
@@ -127,7 +141,7 @@ const Dashboard = () => {
   };
 
   const sumamrise = async (content: string) => {
-    const result = await chat.sendMessage(
+    const result = await chatRef.current!.sendMessage(
       `${content},(this is my notes, analyze it, summarise it and give me key points about it and whatever you think will be useful in as short as possible and concise)`
     );
     return result.response.text();
@@ -168,6 +182,28 @@ const Dashboard = () => {
     }
   };
 
+  async function handleSave() {
+    const { error } = await supabase.from("room_data").insert([
+      {
+        user_email: session.user.user_metadata.email,
+        room_id: roomId,
+        editor_markdown: editorContentRef.current,
+        summaries: summaries,
+        aichat: aiChatData,
+      },
+    ]);
+
+    if (error) {
+      toast.error("Error saving data:");
+      console.error("Error saving data:", error.message);
+    } else {
+      toast.success(
+        `Data saved,https://roomify-hrjc.ondrender.com/data?userEmail=${session.user.user_metadata.email}&roomId=${roomId}`
+      );
+      // console.log("Data saved:", data);
+    }
+  }
+
   return (
     <>
       <section className="py-4 relative  px-4 h-screen">
@@ -177,6 +213,15 @@ const Dashboard = () => {
           className="absolute -z-2 top-0 pointer-events-none"
         />
         <div className="flex items-center">
+          <div>
+            <button
+              className="flex gap-2 text-white p-2 rounded-md bg-purple-800 font-bold transition hover:bg-purple-900 justify-between cursor-pointer z-30 select-none"
+              onClick={handleSave}
+            >
+              <Save />
+              save
+            </button>
+          </div>
           <Navbar />
 
           <div className="flex items-center gap-2">
@@ -315,12 +360,18 @@ const Dashboard = () => {
               {currentTab === "whiteboard" ? (
                 <WhiteBoard />
               ) : currentTab === "editor" ? (
-                <Editor summarise={sumamrise} setSummaries={setSummaries} />
+                <Editor
+                  summarise={sumamrise}
+                  setSummaries={setSummaries}
+                  updateContent={(content) =>
+                    (editorContentRef.current = content)
+                  }
+                />
               ) : currentTab === "summaries" ? (
                 <Summaries summaries={summaries} />
               ) : currentTab === "chatbot" ? (
                 <ChatBotModal
-                  chat={chat}
+                  chat={chatRef.current}
                   setAIChatData={setAIChatData}
                   aiChatData={aiChatData}
                 />

@@ -4,8 +4,9 @@ import http from "http";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mdToPdf } from "md-to-pdf";
 import multer from "multer";
+import { supabase } from "./supabaseClient.js";
+import dotenv from "dotenv";
 
 import fs from "fs";
 const app = express();
@@ -17,7 +18,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
+dotenv.config(); // Loads .env into process.env
 const activeRooms = {};
 
 app.use(cors({ origin: "*" }));
@@ -83,6 +84,22 @@ app.get("/", (req, res) => {
 });
 
 app.use("/uploads", express.static("uploads"));
+
+app.get("/data", async (req, res) => {
+  const { userEmail, roomId } = req.query;
+  const { data, error } = await supabase
+    .from("room_data")
+    .select("*")
+    .eq("user_email", userEmail)
+    .eq("room_id", roomId);
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  return res.status(200).json({ data });
+});
+
 // app.use("/pdfs", express.static("pdfs"));
 
 // app.post("/download-pdf", async (req, res) => {

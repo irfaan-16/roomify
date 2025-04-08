@@ -10,6 +10,7 @@ interface AIChatData {
   message: string;
   isPrompt: boolean;
 }
+
 interface ChatbotComponentProps {
   // onClose: (arg0: boolean) => void;
   chat: any;
@@ -23,8 +24,7 @@ export default function ChatBotModal({
   setAIChatData,
 }: ChatbotComponentProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  // const [aiChatData, setAIChatData] = useState<AIChatData[]>([]);
-  console.log(chat, "CHAT");
+  console.log(chat._history, "CHAT");
 
   function formatMessage(text: string) {
     // 1. Handle multi-line code blocks (```)
@@ -116,7 +116,7 @@ export default function ChatBotModal({
   return (
     <div className="h-full min-h-96 flex flex-col justify-between">
       <div className="bg-white/2 rounded-lg h-full w-full text-white flex-1">
-        <div className=" p-4 overflow-y-auto whitespace-pre fit-height w-[90%] m-auto max-w-[1200px]">
+        <div className=" p-4 overflow-y-auto whitespace-pre w-[90%] m-auto max-w-[1200px]">
           {aiChatData.map((message: AIChatData) => (
             <motion.div
               initial={{ y: 20, opacity: 0.1 }}

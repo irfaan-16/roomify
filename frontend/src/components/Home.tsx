@@ -57,15 +57,12 @@ function Home() {
       },
     });
 
-    const response = await fetch(
-      `/roomInfo/${inputRef.current?.value}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await fetch(`/roomInfo/${inputRef.current?.value}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     const result = await response.json();
     if (result.active) {

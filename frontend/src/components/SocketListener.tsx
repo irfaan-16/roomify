@@ -28,8 +28,14 @@ interface RoomInfo {
 
 const SocketListener = () => {
   const { socket } = useSocket();
-  const { setRoomInfo } = useRoom();
+  const { roomInfo, setRoomInfo } = useRoom();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("room info updated", roomInfo);
+    // do other stuff here
+  }, [roomInfo]);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -44,6 +50,7 @@ const SocketListener = () => {
 
       toast.success(`${name} has joined the meeting🚀`);
     });
+
     socket.on("new-file", (url: string) => {
       setRoomInfo(((prev: RoomInfo) => {
         const updatedDocuments = new Set([...prev.documents, url]); // Ensure uniqueness
@@ -59,6 +66,10 @@ const SocketListener = () => {
     });
 
     socket.on("meetingStarted", (roomId: string) => {
+      console.log("ROOOOMMM INFOOOOOO", roomInfo);
+
+      const obj = { ...roomInfo, active: true } as RoomInfo;
+      setRoomInfo(obj);
       navigate(`/room/${roomId}`);
     });
 
@@ -66,7 +77,7 @@ const SocketListener = () => {
       setRoomInfo(roomInfo);
       toast.error(`${name} has left the meeting💩`);
     });
-  }, [socket]);
+  }, [navigate, roomInfo, setRoomInfo, socket]);
 
   return null;
 };

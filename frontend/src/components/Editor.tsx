@@ -13,23 +13,32 @@ interface Summary {
 }
 import jsPDF from "jspdf";
 import { HardDriveDownloadIcon, Shapes } from "lucide-react";
+import toast from "react-hot-toast";
 
 type EditorProps = {
   summarise: (content: string) => Promise<string>;
   setSummaries: React.Dispatch<React.SetStateAction<Summary[]>>;
+  updateContent: (content: string) => void;
 };
 
-function Editor({ summarise, setSummaries }: EditorProps) {
+function Editor({ summarise, setSummaries, updateContent }: EditorProps) {
   const editor: BlockNoteEditor = useCreateBlockNote();
   const [selectedText, setSelectedText] = useState("");
   const [html, setHtml] = useState<string>("");
+
   const handleSummarise = async () => {
-    const content = await summarise(selectedText);
-    setSummaries(
-      (prev) =>
-        [...prev, { summary: content, content: selectedText }] as Summary[]
-    );
+    try {
+      const content = await summarise(selectedText);
+      setSummaries(
+        (prev) =>
+          [...prev, { summary: content, content: selectedText }] as Summary[]
+      );
+      toast.success("summarised!");
+    } catch (err) {
+      toast.error("something went wrong!");
+    }
   };
+
   const handleMouseUp = () => {
     const selection = window.getSelection()!.toString();
     setSelectedText(selection);
@@ -38,8 +47,10 @@ function Editor({ summarise, setSummaries }: EditorProps) {
 
   const handleOnChange = async () => {
     // Converts the editor's contents from Block objects to Markdown and store to state.
-    const markdown = await editor.blocksToFullHTML(editor.document);
-    setHtml(markdown);
+    const html = await editor.blocksToFullHTML(editor.document);
+    const markdown = await editor.blocksToMarkdownLossy(editor.document);
+    updateContent(markdown);
+    setHtml(html);
   };
 
   const downloadPdf = () => {
