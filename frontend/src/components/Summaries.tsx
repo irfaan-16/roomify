@@ -51,27 +51,31 @@ const Summaries = ({ summaries }: PageProps) => {
 
   return (
     <div className="h-full p-2 text-white overflow-y-auto">
-      <div className="">
-        {summaries.map((summary, idx) => {
-          return (
-            <div className="mb-4" key={idx}>
-              <div className="ml-auto w-fit mb-2 max-w-3xl bg-white/2 p-3 rounded-xl text-wrap bg-gradient-to-l to-purple-700">
-                <p>{summary.content}</p>
-              </div>
+      <div>
+        {summaries.length === 0 ? (
+          <h3 className="text-center text-3xl">Nothing to show here!</h3>
+        ) : (
+          summaries.map((summary, idx) => {
+            return (
+              <div className="mb-4" key={idx}>
+                <div className="ml-auto w-fit mb-2 max-w-3xl bg-white/2 p-3 rounded-xl text-wrap bg-gradient-to-l to-purple-700">
+                  <p>{summary.content}</p>
+                </div>
 
-              <div className="flex gap-2 items-start">
-                <Brain />
-                <div className="mr-auto w-fit max-w-4xl">
-                  <p
-                    dangerouslySetInnerHTML={{
-                      __html: formatMessage(summary.summary),
-                    }}
-                  ></p>
+                <div className="flex gap-2 items-start">
+                  <Brain />
+                  <div className="mr-auto w-fit max-w-4xl">
+                    <p
+                      dangerouslySetInnerHTML={{
+                        __html: formatMessage(summary.summary),
+                      }}
+                    ></p>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );

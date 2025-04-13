@@ -152,6 +152,20 @@ app.get("/roomInfo/:roomId", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
+
+  socket.on("end-room", (roomId) => {
+    io.to(roomId).emit("room-ended");
+    const socketsInRoom = io.sockets.adapter.rooms.get(roomId);
+
+    if (socketsInRoom) {
+      for (const socketId of socketsInRoom) {
+        io.sockets.sockets.get(socketId)?.leave(roomId);
+      }
+    }
+
+    delete activeRooms[roomId];
+  });
+
   socket.on("update-scene", ({ elements, id }) => {
     console.log("server received data", elements);
     socket.broadcast.emit("receive-scene", { elements, id });

@@ -32,11 +32,6 @@ const SocketListener = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("room info updated", roomInfo);
-    // do other stuff here
-  }, [roomInfo]);
-
-  useEffect(() => {
     if (!socket) return;
 
     socket.on("redirectToPage", (redirectTo) => {
@@ -50,7 +45,10 @@ const SocketListener = () => {
 
       toast.success(`${name} has joined the meeting🚀`);
     });
-
+    socket.on("room-ended", () => {
+      toast.error("This meeting has ended.");
+      window.location.href = "/"; // redirect to home or show a page
+    });
     socket.on("new-file", (url: string) => {
       setRoomInfo(((prev: RoomInfo) => {
         const updatedDocuments = new Set([...prev.documents, url]); // Ensure uniqueness
@@ -77,7 +75,7 @@ const SocketListener = () => {
       setRoomInfo(roomInfo);
       toast.error(`${name} has left the meeting💩`);
     });
-  }, [navigate, roomInfo, setRoomInfo, socket]);
+  }, [navigate, roomInfo]);
 
   return null;
 };

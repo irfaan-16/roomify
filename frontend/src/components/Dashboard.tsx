@@ -52,28 +52,7 @@ interface Summary {
 }
 
 const Dashboard = () => {
-  const [summaries, setSummaries] = useState<Summary[]>([
-    {
-      summary:
-        "A database stores backend data.  Key point:  This is the central repository for application information.\n",
-      content: "Database is where we store our backend data",
-    },
-    {
-      summary:
-        "That statement is incorrect. An operating system (OS) is **system software**, not application software.  It manages computer hardware and software resources and provides common services for computer programs. Application software runs *on top of* the OS.\n",
-      content: "Operating System is an Application Software",
-    },
-    {
-      summary:
-        "That statement is incorrect. An operating system (OS) is **system software**, not application software.  It manages computer hardware and software resources and provides common services for computer programs. Application software runs *on top of* the OS.\n",
-      content: "Operating System is an Application Software",
-    },
-    {
-      summary:
-        "That statement is incorrect. An operating system (OS) is **system software**, not application software.  It manages computer hardware and software resources and provides common services for computer programs. Application software runs *on top of* the OS.\n",
-      content: "Operating System is an Application Software",
-    },
-  ]);
+  const [summaries, setSummaries] = useState<Summary[]>([]);
   // const navigate = useNavigate();
 
   const genAI = new GoogleGenerativeAI(
@@ -383,7 +362,7 @@ const Dashboard = () => {
 
           <Inbox />
         </div>
-        <div className="flex justify-between mt-4">
+        <div className="flex justify-between mt-4 border-2">
           <div className="w-full">
             <CallControls />
             <ConnectedUsersList />

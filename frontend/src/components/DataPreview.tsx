@@ -27,7 +27,6 @@ export type RoomDataResponse = {
   data: RoomData[];
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const AIPreview = ({ data }: { data: AIChatMessage[] | undefined }) => {
   if (!data) return;
 
