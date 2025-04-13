@@ -79,10 +79,6 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
-});
-
 app.use("/uploads", express.static("uploads"));
 
 app.get("/getData", async (req, res) => {
@@ -99,45 +95,6 @@ app.get("/getData", async (req, res) => {
 
   return res.status(200).json({ data });
 });
-
-// app.use("/pdfs", express.static("pdfs"));
-
-// app.post("/download-pdf", async (req, res) => {
-//   console.log("server pdf");
-
-//   try {
-//     const { markdown } = req.body;
-//     console.log(markdown, "MARKDOWN");
-//     if (!markdown) return res.status(400).send("Markdown content is required!");
-
-//     // Convert Markdown to PDF
-//     const pdfResult = await mdToPdf({ content: markdown });
-
-//     if (!pdfResult || !pdfResult.content) {
-//       throw new Error("PDF conversion failed!");
-//     }
-//     // Ensure "pdfs" directory exists
-//     const pdfDir = path.join(process.cwd(), "pdfs");
-//     if (!fs.existsSync(pdfDir)) {
-//       console.log("creating file..");
-//       fs.mkdirSync(pdfDir, { recursive: true });
-//     }
-
-//     // Generate unique filename and save PDF
-//     const pdfFilename = `document-${Date.now()}.pdf`;
-//     console.log(pdfFilename, "FILENAME");
-
-//     const outputPath = path.join(pdfDir, pdfFilename);
-//     fs.writeFileSync(outputPath, pdfResult.content);
-//     const sendData = {
-//       downloadUrl: `http://localhost:${4000}/pdfs/${pdfFilename}`,
-//     };
-//     // Return download URL
-//     return res.json(sendData);
-//   } catch (error) {
-//     res.status(500).send({ msg: "Error generating your pdf", error });
-//   }
-// });
 
 app.get("/roomInfo/:roomId", (req, res) => {
   const { roomId } = req.params;
@@ -240,6 +197,9 @@ io.on("connection", (socket) => {
       }
     }
   });
+});
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
 });
 
 server.listen(4000, () => {
