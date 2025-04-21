@@ -67,7 +67,7 @@ const Dashboard = () => {
   const { roomId, roomInfo, setRoomInfo } = useRoom();
   const chatRef = useRef<ReturnType<typeof model.startChat> | null>(null);
   const editorContentRef = useRef<string>("");
-
+ 
   const { session } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>("whiteboard");
   const [focusMode, setFocusMode] = useState<boolean>(false);
