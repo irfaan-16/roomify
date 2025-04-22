@@ -67,7 +67,7 @@ const Dashboard = () => {
   const { roomId, roomInfo, setRoomInfo } = useRoom();
   const chatRef = useRef<ReturnType<typeof model.startChat> | null>(null);
   const editorContentRef = useRef<string>("");
- 
+
   const { session } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>("whiteboard");
   const [focusMode, setFocusMode] = useState<boolean>(false);
@@ -177,7 +177,8 @@ const Dashboard = () => {
       console.error("Error saving data:", error.message);
     } else {
       toast.success(
-        `Data saved,https://roomify-hrjc.ondrender.com/data?userEmail=${session.user.user_metadata.email}&roomId=${roomId}`
+        `Data saved,https://roomify-hrjc.ondrender.com/data?userEmail=${session.user.user_metadata.email}&roomId=${roomId}`,
+        { removeDelay: 3000 }
       );
       // console.log("Data saved:", data);
     }
@@ -185,7 +186,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <section className="py-4 relative  px-4 h-screen">
+      <section className="py-4 relative px-4 h-screen">
         <img
           src={Gradient}
           alt="gradient image"
@@ -258,13 +259,13 @@ const Dashboard = () => {
         </div>
 
         <div
-          className={`w-full flex justify-between gap-4 mt-6 containerHeight`}
+          className={`w-full flex justify-between gap-4 mt-6 min-h-[700px] h-full`}
         >
           <div
             style={
               focusMode
                 ? {
-                    height: "calc(100vh - 60px)",
+                    height: "120vh",
                     position: "absolute",
                     top: "0",
                     left: "0",
@@ -364,7 +365,9 @@ const Dashboard = () => {
         </div>
         <div className="flex justify-between mt-4 border-2">
           <div className="w-full">
-            <CallControls />
+            {session?.user.user_metadata.email === roomInfo?.host.email && (
+              <CallControls />
+            )}
             <ConnectedUsersList />
           </div>
           <TodoList />

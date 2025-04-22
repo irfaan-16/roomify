@@ -114,9 +114,9 @@ export default function ChatBotModal({
   };
 
   return (
-    <div className="h-full min-h-96 flex flex-col justify-between">
-      <div className="bg-white/2 rounded-lg h-full w-full text-white flex-1">
-        <div className=" p-4 overflow-y-auto whitespace-pre w-[90%] m-auto max-w-[1200px]">
+    <div className="h-full min-h-[700px] max-h-[700px] flex flex-col justify-between ">
+      <div className="bg-white/2 rounded-lg  w-full text-white flex-1 overflow-y-auto">
+        <div className=" p-4 overflow-y-auto whitespace-pre w-[90%] m-auto max-w-[1200px] ">
           {aiChatData.map((message: AIChatData) => (
             <motion.div
               initial={{ y: 20, opacity: 0.1 }}

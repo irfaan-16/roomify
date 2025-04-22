@@ -99,17 +99,17 @@ const Inbox = () => {
         Inbox
       </h1>
 
-      <div className="flex flex-col justify-between h-full">
+      <div className="flex flex-col justify-between max-h-[700px] min-h-[700px]">
         <div className="flex flex-col gap-2 mt-4 h-full">
           <div className="h-full">
             {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center max-h-[620px]">
                 <h1 className="text-white text-center  text-xl">
                   Start the conversation!💬
                 </h1>
               </div>
             ) : (
-              <div className="max-h-[98%] overflow-y-scroll pr-2">
+              <div className="overflow-y-scroll pr-2">
                 {messages.map((msg) => (
                   <Message
                     key={msg.id}

@@ -51,7 +51,7 @@ const Summaries = ({ summaries }: PageProps) => {
 
   return (
     <div className="h-full p-2 text-white overflow-y-auto">
-      <div>
+      <div className="min-h-[700px] max-h-[700px] overflow-y-auto">
         {summaries.length === 0 ? (
           <h3 className="text-center text-3xl">Nothing to show here!</h3>
         ) : (
